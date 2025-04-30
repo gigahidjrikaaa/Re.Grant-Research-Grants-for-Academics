@@ -163,10 +163,10 @@ export default function ApplyGrantPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             {/* Step 1: Project Information */}
-            <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
+            <div className={currentStep === 1 ? 'block' : 'hidden'}>
               <CardHeader>
                 <CardTitle>Step 1: Project Information</CardTitle>
-                <CardDescription>Provide the core details about your research project.</CardDescription>
+                <CardDescription className='mb-6'>Provide the core details about your research project.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormField
@@ -202,10 +202,10 @@ export default function ApplyGrantPage() {
             </div>
 
             {/* Step 2: Team Members */}
-            <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
+            <div className={currentStep === 2 ? 'block' : 'hidden'}>
               <CardHeader>
                 <CardTitle>Step 2: Team Members</CardTitle>
-                <CardDescription>List the key personnel involved in this research project.</CardDescription>
+                <CardDescription className='mb-6'>List the key personnel involved in this research project.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
@@ -275,10 +275,10 @@ export default function ApplyGrantPage() {
             </div>
 
             {/* Step 3: Budget & Milestones */}
-            <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
+            <div className={currentStep === 3 ? 'block' : 'hidden'}>
               <CardHeader>
                 <CardTitle>Step 3: Budget & Milestones</CardTitle>
-                <CardDescription>Specify funding and define project milestones with clear criteria.</CardDescription>
+                <CardDescription className='mb-6'>Specify funding and define project milestones with clear criteria.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormField
@@ -363,10 +363,10 @@ export default function ApplyGrantPage() {
             </div>
 
             {/* Step 4: Documents & Review */}
-            <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
+            <div className={currentStep === 4 ? 'block' : 'hidden'}>
               <CardHeader>
                 <CardTitle>Step 4: Supporting Documents & Review</CardTitle>
-                <CardDescription>Upload your detailed proposal document and review your application.</CardDescription>
+                <CardDescription className='mb-6'>Upload your detailed proposal document and review your application.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Review Section - Updated */}
