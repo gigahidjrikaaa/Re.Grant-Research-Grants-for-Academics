@@ -6,6 +6,7 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { WagmiConfig } from 'wagmi';
 import { MeshProvider } from "@meshsdk/react";
 import { wagmiConfig } from '@/lib/wagmi'; // Import config from lib
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Custom hook to ensure component is mounted (prevents hydration errors)
 function useIsMounted() {
@@ -28,6 +29,7 @@ const regrantTheme = darkTheme({
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const isMounted = useIsMounted();
+  const [queryClient] = React.useState(() => new QueryClient());
 
   if (!isMounted) {
     // Render nothing or a loading indicator on the server/initial render
@@ -36,19 +38,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider
-        modalSize="compact"
-        theme={regrantTheme} // Apply custom theme
-        appInfo={{
-          appName: 'Re.grant',
-        }}
-      >
-        {/* MeshProvider for Cardano */}
-        <MeshProvider>
-          {children}
-        </MeshProvider>
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <QueryClientProvider client={queryClient}>
+        <WagmiConfig config={wagmiConfig}>
+        <RainbowKitProvider
+            modalSize="compact"
+            theme={regrantTheme} // Apply custom theme
+            appInfo={{
+            appName: 'Re.grant',
+            }}
+        >
+            {/* MeshProvider for Cardano */}
+            <MeshProvider>
+            {children}
+            </MeshProvider>
+        </RainbowKitProvider>
+        </WagmiConfig>
+    </QueryClientProvider>
   );
 }

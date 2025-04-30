@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}> {/* Apply font variable if defined */}
+    <html lang="en" className={inter.variable}>
       <body className={`font-sans bg-gray-50 text-gray-900 antialiased`}> {/* Use font-sans which Tailwind maps to Inter; Set base colors */}
         <Providers>
           <div className="flex flex-col min-h-screen">

@@ -3,7 +3,7 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { CardanoWallet } from '@meshsdk/react';
-// import { Button } from '@/components/ui/button'; // Assuming you re-export Shadcn Button
+import { Button } from '@/components/ui/button'; // Assuming you re-export Shadcn Button
 
 export default function HomePage() {
   return (
@@ -19,18 +19,19 @@ export default function HomePage() {
         {/* RainbowKit Button for EVM (Lisk) */}
         <ConnectButton
           label="Connect EVM Wallet (Lisk)"
-          accountStatus="address" // Options: address, avatar, full
-          chainStatus="icon" // Options: full, icon, name, none
-          showBalance={true} // Options: true, false
+          accountStatus="address"
+          chainStatus="icon"
+          showBalance={true}
         />
 
-        {/* Mesh SDK Button for Cardano (Future Use) */}
-        {/* Style this button to match RainbowKit/Shadcn if needed */}
-        <CardanoWallet label="Connect Cardano Wallet" />
+        {/* Mesh SDK Button for Cardano */}
+        <div className="cardano-wallet-container p-2 bg-white rounded-md shadow">
+          <CardanoWallet />
+        </div>
       </div>
 
       {/* Example Shadcn Button (Requires setup) */}
-      {/* <Button variant="outline" className="mt-8">Learn More</Button> */}
+      <Button variant="outline" className="mt-8">Learn More</Button>
 
       {/* Add more content for the landing page later */}
     </div>
