@@ -15,11 +15,43 @@ Re.Grant is a platform designed to streamline the process of obtaining research 
 
 Traditional grant application processes are often time-consuming, opaque, and complex. Re.Grant leverages blockchain technology to create a more transparent and efficient funding ecosystem, allowing researchers to focus on what matters most: their research.
 
-## Technology
+## Technology Stack
 
+- **Frontend**: Next.JS, Tailwind CSS
+- **Backend**: FastAPI, Python
+- **Database**: PostgreSQL
 - **Blockchain**: LISK L2 Solution
-- **Payout Currency**: IDRX
-- **Platform**: Web-based application
+- **Local Development**: Foundry
+- **Smart Contracts**: Solidity
+- **Testing**: Mocha, Chai, Jest
+- **Deployment**: Docker, Kubernetes
+- **Version Control**: Git, GitHub
+- **CI/CD**: GitHub Actions, Travis CI
+- **Monitoring**: Prometheus, Grafana
+- **Documentation**: Markdown, JSDoc
+
+## Chain Configuration
+
+- Network Name: Lisk Sepolia
+- RPC URL: <https://rpc.sepolia-api.lisk.com>
+- Chain ID: 4202
+- Currency Symbol: ETH
+- Explorer URL: <https://sepolia-blockscout.lisk.com>
+
+### Getting Lisk Sepolia ETH
+
+- Go to the [Sepolia Faucet](https://sepolia-faucet.com)
+- Connect your wallet
+- Request Sepolia ETH
+- Wait for the transaction to be confirmed
+- Check your wallet balance
+- Use the Sepolia ETH to pay for transaction fees on the Lisk Sepolia network
+
+#### Important Notes About Sepolia Network
+
+- Sepolia ETH is a testnet currency and has no real-world value
+- The Sepolia network is a testnet intended only for testing and development purposes, not for production use
+- The Sepolia network operates independently of any central authority and is not affiliated with any real-world currency or financial institution
 
 ## Getting Started
 
