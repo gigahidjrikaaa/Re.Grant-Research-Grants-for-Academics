@@ -1,47 +1,81 @@
 // src/components/layout/Header.tsx
 'use client';
 
-import { CardanoWallet } from '@meshsdk/react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button'; // Assuming Shadcn Button
+import { Menu } from 'lucide-react'; // Icon for mobile menu toggle
+
+// Placeholder Logo component or SVG
+const Logo = () => (
+    // Replace with your actual SVG logo or image component
+    <svg height="24" width="24" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" stroke="#1E3A8A" strokeWidth="5" fill="none" />
+        <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fontSize="40" fill="#1E3A8A" fontWeight="bold">R</text>
+    </svg>
+);
+
 
 export default function Header() {
+  // State for mobile menu (implement later if needed)
+  // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        <div className="mr-4 hidden md:flex">
-          {/* Placeholder for Logo/Brand */}
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            {/* <Icons.logo className="h-6 w-6" /> */}
-            <span className="hidden font-bold sm:inline-block text-primary-blue"> {/* Use Primary Blue */}
+    <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/95 backdrop-blur-sm">
+      {/* Use bg-white for a cleaner look, adjusted transparency */}
+      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"> {/* Increased height slightly */}
+        {/* Left Section: Logo and Desktop Nav */}
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center space-x-2 mr-6">
+            <Logo />
+            <span className="font-bold text-lg text-primary-blue"> {/* Use Primary Blue */}
               Re.grant
             </span>
           </Link>
-          {/* Add main navigation links here if needed */}
-          {/* <nav className="flex items-center gap-6 text-sm">
-             <Link href="/grants" className="text-foreground/60 transition-colors hover:text-foreground/80">
+          {/* Desktop Navigation (Hidden on mobile) */}
+          {/* Add key navigation items here if needed, e.g., Grants, Apply */}
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+             <Link href="/grants" className="text-gray-600 hover:text-gray-900">
                Grants
              </Link>
-           </nav> */}
+             <Link href="/apply" className="text-gray-600 hover:text-gray-900">
+               Apply
+             </Link>
+           </nav>
         </div>
-        {/* Add mobile navigation toggle here later */}
-        {/* <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:text-accent-foreground h-9 py-2 mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
-           <svg>...</svg> <span className="sr-only">Toggle Menu</span>
-         </button> */}
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center">
-            {/* RainbowKit Connect Button */}
-            <ConnectButton
-              label="Connect Wallet"
-              accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
-              chainStatus={{ smallScreen: 'icon', largeScreen: 'full' }}
-              showBalance={{ smallScreen: false, largeScreen: true }}
-            />
-            {/* Add Cardano Connect Button here later if needed */}
-            <div className="ml-2"> <CardanoWallet /> </div>
-          </nav>
+
+        {/* Right Section: Wallet Connector & Mobile Menu Toggle */}
+        <div className="flex items-center space-x-3">
+           {/* Wallet Connect Button */}
+           <div className="flex-shrink-0">
+             <ConnectButton
+                label="Connect Wallet"
+                accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
+                chainStatus={{ smallScreen: 'icon', largeScreen: 'full' }}
+                showBalance={{ smallScreen: false, largeScreen: true }}
+             />
+           </div>
+
+           {/* Mobile Menu Button (Hidden on desktop) */}
+           <Button
+             variant="ghost"
+             size="icon"
+             className="md:hidden"
+             // onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} // Add state later
+             aria-label="Toggle Menu"
+           >
+             <Menu className="h-5 w-5" />
+           </Button>
         </div>
       </div>
+      {/* Mobile Menu Panel (Implement later if needed) */}
+      {/* {isMobileMenuOpen && (
+         <div className="md:hidden border-t">
+           <nav className="flex flex-col space-y-2 p-4">
+              Add mobile nav links here
+           </nav>
+         </div>
+       )} */}
     </header>
   );
 }
