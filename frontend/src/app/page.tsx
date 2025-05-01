@@ -51,7 +51,9 @@ export default function LandingPage() {
       <div className="relative z-10 text-center max-w-3xl">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
         <span className="block xl:inline">Empowering Research with</span>{' '}
-        <span className="block text-primary-blue xl:inline">Transparent Funding</span>
+        <span className="block xl:inline bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300 bg-clip-text text-transparent animate-pulse-glow">
+          Transparent Funding
+        </span>
         </h1>
         <p className="mt-3 max-w-md mx-auto text-base text-gray-600 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
         Re.grant leverages Lisk L2 blockchain technology to bring efficiency, transparency, and accessibility to research grant management and collaboration within the Department of Electrical and Information Engineering.

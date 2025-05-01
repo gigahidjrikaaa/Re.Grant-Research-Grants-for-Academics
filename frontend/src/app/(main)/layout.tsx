@@ -1,6 +1,5 @@
 // src/app/(main)/layout.tsx
 
-import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 
 export default function MainAppLayout({
@@ -10,7 +9,6 @@ export default function MainAppLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 p-6 lg:p-8 bg-gray-100/50"> {/* Slightly different bg for content area */}
