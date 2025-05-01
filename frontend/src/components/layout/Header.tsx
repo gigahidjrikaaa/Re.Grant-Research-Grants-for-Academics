@@ -8,10 +8,19 @@ import { Menu } from 'lucide-react'; // Icon for mobile menu toggle
 
 // Placeholder Logo component or SVG
 const Logo = () => (
-    // Replace with your actual SVG logo or image component
-    <svg height="24" width="24" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="45" stroke="#1E3A8A" strokeWidth="5" fill="none" />
-        <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fontSize="40" fill="#1E3A8A" fontWeight="bold">R</text>
+    <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1E3A8A" />
+          <stop offset="100%" stopColor="#3B82F6" />
+        </linearGradient>
+      </defs>
+      
+      {/* Elegant circle base */}
+      <circle cx="50" cy="50" r="40" fill="url(#logoGradient)" />
+          
+      {/* Negative space creating "Re." with elegant curves */}
+      <path d="M30,50 Q40,20 50,50 T70,50" fill="none" stroke="white" strokeWidth="5" />
     </svg>
 );
 
@@ -26,10 +35,10 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"> {/* Increased height slightly */}
         {/* Left Section: Logo and Desktop Nav */}
         <div className="flex items-center">
-          <Link href="/" className="flex items-center space-x-2 mr-6">
+          <Link href="/" className="flex items-center mr-6">
             <Logo />
             <span className="font-bold text-lg text-primary-blue"> {/* Use Primary Blue */}
-              Re.grant
+              <span className='text-white rounded-xs pb-0.5 px-0.5 gradient-blue'>Re.</span>grant
             </span>
           </Link>
           {/* Desktop Navigation (Hidden on mobile) */}
