@@ -31,7 +31,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex flex-col min-h-screen">
             {/* <Header /> */} {/* Placeholder for Header */}
-            <main className="flex-grow container mx-auto px-4 py-8"> {/* Example main content layout */}
+            <main className="flex-grow container">
               {children}
             </main>
             {/* <Footer /> */} {/* Placeholder for Footer */}

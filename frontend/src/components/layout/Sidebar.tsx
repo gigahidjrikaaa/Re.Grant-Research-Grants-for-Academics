@@ -8,6 +8,7 @@ import {
     LayoutGrid, // Example Dashboard Icon
     FileText,   // Grants List Icon
     PlusSquare, // Apply Icon
+    Briefcase,  // Project Board Icon
     User,       // Profile Icon
     Users,      // Talent Pool Icon
     Settings    // Settings Icon
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid }, // Example
   { href: '/grants', label: 'Browse Grants', icon: FileText },
   { href: '/apply', label: 'Apply for Grant', icon: PlusSquare },
+  { href: '/project-board', label: 'Project Board', icon: Briefcase }, // Future
   { href: '/profile', label: 'My Profile', icon: User }, // Future
   { href: '/talent-pool', label: 'Talent Pool', icon: Users }, // Future
   { href: '/settings', label: 'Settings', icon: Settings }, // Example
