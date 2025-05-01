@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css"; // Includes Tailwind base styles
 import '@rainbow-me/rainbowkit/styles.css'; // RainbowKit styles
 import { Providers } from "./providers";
+import Header from "@/components/layout/Header";
 // Import Header/Footer/Sidebar components later when created
 // import Header from "@/components/layout/Header";
 
@@ -30,11 +31,11 @@ export default function RootLayout({
       <body className={`font-sans bg-gray-50 text-gray-900 antialiased`}> {/* Use font-sans which Tailwind maps to Inter; Set base colors */}
         <Providers>
           <div className="flex flex-col min-h-screen">
-            {/* <Header /> */} {/* Placeholder for Header */}
+            <Header /> {/* Placeholder for Header */}
             <main className="flex-grow container">
               {children}
             </main>
-            {/* <Footer /> */} {/* Placeholder for Footer */}
+            {/* <Footer /> Placeholder for Footer */}
           </div>
         </Providers>
       </body>
