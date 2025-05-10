@@ -1,78 +1,52 @@
 // src/lib/wagmi.ts
-import { getDefaultWallets, connectorsForWallets } from '@rainbow-me/rainbowkit';
-import { argentWallet, trustWallet, ledgerWallet } from '@rainbow-me/rainbowkit/wallets';
-import { createConfig, http } from 'wagmi'; // Import http transport
-import { defineChain } from 'viem'; // Use defineChain for custom chains
+import { Config } from 'wagmi';
+import { defineChain } from 'viem';
+import { defaultConfig as xellarDefaultConfig } from '@xellar/kit'; // Import Xellar's config
 
-// 1. Define Lisk Sepolia Chain using defineChain for better type safety & structure
-// (Consider moving this definition to a separate constants file later for cleanliness)
+// 1. Define Lisk Sepolia Chain (remains the same)
 export const liskSepolia = defineChain({
   id: 4202,
   name: 'Lisk Sepolia',
   nativeCurrency: { decimals: 18, name: 'Lisk Sepolia Ether', symbol: 'ETH' },
   rpcUrls: {
     default: { http: ['https://rpc.sepolia-api.lisk.com'] },
-    // Add more RPC URLs if available (e.g., private ones)
-    // public: { http: ['https://rpc.sepolia-api.lisk.com'] }, // Can be same as default if only one public RPC
   },
   blockExplorers: {
     default: { name: 'Liskscan', url: 'https://sepolia-blockscout.lisk.com' },
   },
   testnet: true,
 });
-// Add other chains here if needed (e.g., Lisk Mainnet)
-// Define them similarly using defineChain or import from 'wagmi/chains' if standard
-const supportedChains = [liskSepolia] as const; // Make this a readonly array with proper typing
 
-// 2. Set up RainbowKit connectors
-// Ensure you have NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID in your .env.local
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
-if (!projectId) {
+const supportedChains = [liskSepolia] as const;
+
+// 2. Get WalletConnect Project ID and Xellar App ID from environment variables
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
+const xellarAppId = process.env.NEXT_PUBLIC_XELLAR_APP_ID || "";
+const xellarEnv = process.env.NEXT_PUBLIC_XELLAR_ENV === 'production' ? 'production' : 'sandbox'; // Default to sandbox
+
+if (!walletConnectProjectId) {
     console.warn("WalletConnect Project ID not found. Please add NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID to your .env.local file.");
-    // Handle this appropriately - throw error or disable WalletConnect
-    
-    // throw new Error("WalletConnect Project ID is required.");
+}
+if (!xellarAppId) {
+    console.warn("Xellar App ID not found. Please add NEXT_PUBLIC_XELLAR_APP_ID to your .env.local file.");
 }
 
-const { wallets } = getDefaultWallets({
-  appName: 'Re.grant',
-  projectId: projectId,
-  // chains are implicitly passed via createConfig now, no need to pass here
-});
+// 3. Create Wagmi config using Xellar's defaultConfig
+// This config will be used by WagmiProvider. XellarKitProvider will also use parts of this.
+export const wagmiConfig = xellarDefaultConfig({
+  appName: 'Re.grant', // Your app name
+  walletConnectProjectId,
+  xellarAppId,
+  xellarEnv, // 'sandbox' or 'production'
+  chains: [...supportedChains], // Create a mutable copy of supportedChains
+  // Xellar's defaultConfig handles transports internally based on chains
+  // You might not need to define transports explicitly like before if Xellar handles it.
+  // Verify this with Xellar documentation. If manual transport setup is needed:
+  // transports: {
+  //   [liskSepolia.id]: http(),
+  // },
+  ssr: true, // Enable SSR support if using Next.js
+}) as Config; // Cast to Wagmi's Config type
 
-// Define connectors using the wallets from getDefaultWallets and any custom ones
-export const connectors = connectorsForWallets(
-  [
-    ...wallets,
-    {
-      groupName: 'Other',
-      wallets: [
-        argentWallet,
-        trustWallet,
-        ledgerWallet
-      ]
-    }
-  ],
-  {
-    projectId,
-    appName: 'Re.grant'
-  }
-);
-// 3. Create Wagmi config using createConfig (Wagmi v2 style)
-export const wagmiConfig = createConfig({
-  chains: supportedChains, // Pass the array of supported chains
-  connectors: connectors, // Pass the configured connectors
-  transports: {
-    // Define transport for each chain. Use the chain's id as the key.
-    [liskSepolia.id]: http(), // Use the http transport for Lisk Sepolia
-    // Example for another chain if added:
-    // [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`),
-  },
-  ssr: true, // Enable SSR support if using Next.js App Router or Pages Router with SSR
-  // Optional: Add storage configuration if needed
-  // storage: createStorage({ storage: window.localStorage }),
-});
-
-// Export chains separately if needed elsewhere (e.g., in RainbowKitProvider)
+// Export chains if needed elsewhere (e.g., for XellarKitProvider if it doesn't infer from wagmiConfig)
 export const chains = supportedChains;
-
