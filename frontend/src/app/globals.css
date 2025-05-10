@@ -4,6 +4,7 @@
   This is the primary way to include Tailwind in v4+.
 */
 @import "tailwindcss";
+@config "../tailwind.config.ts"; /* Path to your Tailwind config file */
 
 /*
   Define your theme using CSS variables.
@@ -33,7 +34,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 28% 17%;
 
-    --primary-blue: 226 66% 32%;
+    --primary: 226 66% 32%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 215 16% 90%;
