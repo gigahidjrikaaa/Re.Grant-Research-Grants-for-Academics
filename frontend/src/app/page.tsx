@@ -1,200 +1,434 @@
 // src/app/page.tsx
 'use client';
 
+import { Button } from "@/components/ui/button";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ArrowRight, CheckCircle, Users, FileText, Briefcase } from 'lucide-react';
+import { ArrowRight, Users, FileText, Briefcase, Zap, ShieldCheck, Lightbulb, BarChart3, LinkIcon, CheckCircle } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react'; // Added useRef, useState
+import Link from 'next/link';
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'; // Added useMotionValue, useSpring
+
+// Placeholder Logo component or SVG
+const Logo = () => (
+    <svg height="32" width="32" viewBox="0 0 100 100">
+        <motion.circle
+            cx="50" cy="50" r="45"
+            stroke="#1E3A8A" strokeWidth="7" fill="none"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+        />
+        <motion.text
+            x="50%" y="50%" dominantBaseline="middle" textAnchor="middle"
+            fontSize="50" fill="#1E3A8A" fontWeight="bold"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+        >
+            R
+        </motion.text>
+    </svg>
+);
+
+// --- Animation Variants ---
+const sectionVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut",
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: "easeOut" } }
+};
+
+// Feature Card Component
+interface FeatureCardProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
+  <motion.div
+    className="flex flex-col items-center text-center p-6 md:p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 h-full"
+    variants={cardVariants}
+  >
+    <motion.div
+      className="p-4 bg-blue-100 rounded-full mb-5"
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
+    >
+      <Icon className="h-8 w-8 text-primary-blue" />
+    </motion.div>
+    <h3 className="text-xl font-semibold text-gray-800 mb-2">{title}</h3>
+    <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+  </motion.div>
+);
+
+// How it Works Step Component
+interface HowItWorksStepProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  stepNumber: number;
+}
+const HowItWorksStep: React.FC<HowItWorksStepProps> = ({ icon: Icon, title, description, stepNumber }) => (
+  <motion.div
+    className="flex flex-col items-center text-center p-4"
+    variants={itemVariants}
+  >
+    <div className="relative mb-4">
+        <motion.div
+            className="flex items-center justify-center h-16 w-16 rounded-full bg-primary-blue text-white shadow-md"
+            initial={{ rotate: -45, scale: 0 }}
+            animate={{ rotate: 0, scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15, delay: stepNumber * 0.1 }}
+        >
+            <Icon className="h-7 w-7" />
+        </motion.div>
+        <motion.div
+            className="absolute -top-2 -right-2 flex items-center justify-center h-7 w-7 rounded-full bg-amber-500 text-white text-xs font-bold border-2 border-white"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: stepNumber * 0.1 + 0.2 }}
+        >
+            {stepNumber}
+        </motion.div>
+    </div>
+    <h4 className="text-lg font-medium text-gray-800 mb-1">{title}</h4>
+    <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+  </motion.div>
+);
+
+// Updated Animated Geometric Background for Hero with Cursor Interaction
+const AnimatedHeroBackground = () => {
+    const heroRef = useRef<HTMLDivElement>(null); // Ref for the hero section to get bounds
+
+    // Mouse position relative to the hero section
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    // Spring-animated values for smoother following
+    const springConfig = { stiffness: 100, damping: 20, mass: 1 };
+    const springMouseX = useSpring(mouseX, springConfig);
+    const springMouseY = useSpring(mouseY, springConfig);
+
+    useEffect(() => {
+        const handleMouseMove = (event: MouseEvent) => {
+            if (heroRef.current) {
+                const rect = heroRef.current.getBoundingClientRect();
+                // Calculate mouse position relative to the center of the hero section
+                const x = event.clientX - rect.left - rect.width / 2;
+                const y = event.clientY - rect.top - rect.height / 2;
+                mouseX.set(x);
+                mouseY.set(y);
+            }
+        };
+
+        const currentHeroRef = heroRef.current; // Capture ref value
+        if (currentHeroRef) {
+            currentHeroRef.addEventListener('mousemove', handleMouseMove);
+        }
+
+        return () => {
+            if (currentHeroRef) {
+                currentHeroRef.removeEventListener('mousemove', handleMouseMove);
+            }
+        };
+    }, [mouseX, mouseY]); // Depend on mouseX, mouseY to re-attach if needed (though typically not)
+
+    // Orb configurations
+    const orbs = [
+        { id: 1, size: 300, color: "hsl(220, 90%, 65%)", intensity: 0.03, blur: "80px", initialOffsetX: "-20%", initialOffsetY: "-10%" },
+        { id: 2, size: 450, color: "hsl(210, 95%, 70%)", intensity: 0.05, blur: "100px", initialOffsetX: "25%", initialOffsetY: "15%" },
+        { id: 3, size: 250, color: "hsl(35, 100%, 60%)", intensity: 0.04, blur: "70px", initialOffsetX: "0%", initialOffsetY: "30%" }, // Ochre accent
+        { id: 4, size: 350, color: "hsl(230, 85%, 75%)", intensity: 0.025, blur: "90px", initialOffsetX: "15%", initialOffsetY: "-25%" },
+    ];
+
+    return (
+        <div ref={heroRef} className="absolute inset-0 overflow-hidden z-0">
+            {/* Static subtle grid for base texture if desired */}
+            <div className="absolute inset-0 opacity-[0.03]">
+                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="subtleGrid" patternUnits="userSpaceOnUse" width="50" height="50">
+                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="hsla(222, 47%, 50%, 0.4)" strokeWidth="0.3"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#subtleGrid)" />
+                </svg>
+            </div>
+
+            {/* Cursor-following Orbs */}
+            {orbs.map(orb => {
+                // Transform mouse position for parallax effect (different intensity for each orb)
+                // Orbs further "behind" move less
+                const dx = useTransform(springMouseX, val => val * orb.intensity);
+                const dy = useTransform(springMouseY, val => val * orb.intensity);
+
+                return (
+                    <motion.div
+                        key={orb.id}
+                        className="absolute rounded-full"
+                        style={{
+                            width: orb.size,
+                            height: orb.size,
+                            // Position orbs around the center initially, then react to mouse
+                            // Using translate to ensure they are centered before mouse movement
+                            left: `calc(50% + ${orb.initialOffsetX})`,
+                            top: `calc(50% + ${orb.initialOffsetY})`,
+                            translateX: "-50%", // Center the orb
+                            translateY: "-50%", // Center the orb
+                            x: dx, // Apply parallax based on mouse
+                            y: dy, // Apply parallax based on mouse
+                            backgroundColor: orb.color,
+                            filter: `blur(${orb.blur})`,
+                            opacity: 0.5, // Adjust base opacity for softer look
+                            // No direct boxShadow for neon, as blur and color achieve the soft glow
+                        }}
+                        // Optional: Add a subtle initial animation for the orbs themselves
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 0.5 }}
+                        transition={{ duration: 1.5, delay: Math.random() * 0.5, ease: "circOut" }}
+                    />
+                );
+            })}
+        </div>
+    );
+};
+
 
 export default function LandingPage() {
   const { isConnected, address } = useAccount();
   const router = useRouter();
 
-  // Redirect authenticated users away from the landing page
-  // (Adjust '/grants' to your desired default authenticated route)
   useEffect(() => {
     if (isConnected && address) {
-      router.push('/grants'); // Redirect to the main app area
+      router.push('/grants');
     }
   }, [isConnected, address, router]);
 
-  // If already connected, maybe show a minimal loading or redirecting state
   if (isConnected) {
       return (
-          <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-br from-white to-blue-50">
-              <p className="text-gray-600">Redirecting to the platform...</p>
-              {/* Optional: Add a spinner */}
+          <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
+              <p className="text-gray-700">Redirecting to Re.grant platform...</p>
           </div>
       );
   }
 
-  // Render landing page content if not connected
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <main className="relative flex-grow flex items-center justify-center px-4 py-16 sm:py-24 lg:py-32 bg-gradient-to-br from-white via-blue-50 to-blue-100 overflow-hidden">
-      {/* Animated Background Decorations */}
-      {/* These divs create soft, moving circles behind the main content */}
-      <div
-        className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-lg opacity-40 animate-pulse animate-move-around bg-decoration-1"
-      ></div>
-      <div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 sm:w-104 sm:h-104 bg-sky-100 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse animate-move-around bg-decoration-2"
-      ></div>
-       <div
-        className="absolute top-10 right-1/5 w-64 h-64 sm:w-80 sm:h-80 bg-blue-100 rounded-full mix-blend-multiply filter blur-lg opacity-45 animate-pulse animate-move-around bg-decoration-3"
-      ></div>
-
-      {/* Hero Content (ensure it's above the decorations) */}
-      <div className="relative z-10 text-center max-w-3xl">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-        <span className="block xl:inline">Empowering Research with</span>{' '}
-        <span className="block xl:inline bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300 bg-clip-text text-transparent animate-pulse-glow">
-          Transparent Funding
-        </span>
-        </h1>
-        <p className="mt-3 max-w-md mx-auto text-base text-gray-600 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-        Re.grant leverages Lisk L2 blockchain technology to bring efficiency, transparency, and accessibility to research grant management and collaboration within the Department of Electrical and Information Engineering.
-        </p>
-        <div className="mt-8 flex justify-center">
-         {/* Connect button acts as the primary call to action */}
-         <ConnectButton
-          label="Connect EVM Wallet & Get Started"
-          showBalance={false}
-          chainStatus="none"
-         />
+    <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">
+      <motion.header
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="sticky top-0 z-50 py-4 px-4 sm:px-6 lg:px-8 border-b border-gray-200 bg-white/80 backdrop-blur-lg"
+      >
+        <div className="container mx-auto flex justify-between items-center">
+          <Link href="/" className="flex items-center space-x-2">
+            <Logo />
+            <span className="font-bold text-xl text-primary-blue">Re.grant</span>
+          </Link>
+          <div>
+            <ConnectButton
+              label="Connect & Enter Platform"
+              showBalance={false}
+              chainStatus="none"
+            />
+          </div>
         </div>
-      </div>
+      </motion.header>
+
+      <main className="flex-grow">
+        {/* Hero Section */}
+        {/* The parent <section> needs to be the reference for mousemove if AnimatedHeroBackground is a direct child */}
+        <section className="relative py-20 md:py-32 lg:py-36 overflow-hidden bg-white">
+          <AnimatedHeroBackground /> {/* Animated background */}
+          <motion.div
+            className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center z-10"
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+          >
+            <motion.h1
+              variants={itemVariants}
+              className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl leading-tight"
+            >
+              <span className="block">Empowering Research with</span>
+              <span
+                className="block pb-1 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 text-transparent bg-clip-text mt-1 sm:mt-2 [text-shadow:0_0_8px_theme(colors.sky.300/50%)] hover:[text-shadow:0_0_16px_theme(colors.sky.300/80%)] transition-all duration-300 ease-in-out"
+              >
+                Transparent & Efficient Funding
+              </span>
+            </motion.h1>
+            <motion.p
+              variants={itemVariants}
+              className="mt-6 max-w-xl mx-auto text-lg text-gray-700 md:mt-8 md:text-xl md:max-w-3xl"
+            >
+              Re.grant utilizes Lisk L2 blockchain to streamline research grant management and foster collaboration within the Department of Electrical and Information Engineering.
+            </motion.p>
+            <motion.div variants={itemVariants} className="mt-10 flex justify-center">
+              <ConnectButton
+                label="Connect Wallet & Get Started"
+                showBalance={false}
+                chainStatus="none"
+              />
+            </motion.div>
+             <motion.p variants={itemVariants} className="mt-4 text-xs text-gray-500">
+                Connect your EVM-compatible wallet to access the platform.
+             </motion.p>
+          </motion.div>
+        </section>
+
+        {/* Sections with scroll-triggered animations */}
+        {[[
+          "What is Re.grant?",
+          "A dedicated platform designed to modernize and simplify the research lifecycle for our department.",
+          <div key="what-is-content" className="grid md:grid-cols-2 gap-8 items-center">
+              <motion.div variants={itemVariants} className="space-y-4">
+                  <p className="text-gray-700 leading-relaxed">
+                      Re.grant is an innovative initiative by the Department of Electrical and Information Engineering to address common challenges in academic research funding and collaboration. By leveraging the power of Lisk L2 blockchain technology, we aim to create a more transparent, efficient, and accessible ecosystem for our researchers, students, and faculty.
+                  </p>
+                  <p className="text-gray-700 leading-relaxed">
+                      Our platform facilitates the entire grant process, from application and review to milestone-based fund disbursement using IDRX, an Indonesian Rupiah-pegged stablecoin. Beyond funding, Re.grant fosters a collaborative environment through its integrated Talent Pool and Project Board, connecting expertise with opportunity.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 text-gray-700 pl-4">
+                      <li><span className="font-medium text-primary-blue">Enhanced Transparency:</span> Track grant applications and fund usage on an immutable ledger.</li>
+                      <li><span className="font-medium text-primary-blue">Increased Efficiency:</span> Automate disbursements and reduce administrative burdens.</li>
+                      <li><span className="font-medium text-primary-blue">Fosters Collaboration:</span> Easily find project partners or contribute to ongoing research.</li>
+                  </ul>
+              </motion.div>
+              <motion.div variants={itemVariants} className="flex justify-center">
+                  <div className="w-full max-w-md h-64 bg-gradient-to-tr from-blue-100 to-indigo-200 rounded-xl shadow-lg flex items-center justify-center">
+                      <Lightbulb className="h-24 w-24 text-primary-blue opacity-70" />
+                  </div>
+              </motion.div>
+          </div>
+        ], [
+          "How Re.grant Works",
+          "A simple, streamlined process powered by blockchain technology.",
+          <div key="how-it-works-content" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              <HowItWorksStep stepNumber={1} icon={FileText} title="Submit Proposal" description="Researchers submit grant proposals with detailed project plans, budgets in IDRX, and defined milestones directly on the platform." />
+              <HowItWorksStep stepNumber={2} icon={CheckCircle} title="Review & Approval" description="The departmental committee reviews proposals. Approved grants are recorded on the Lisk L2 blockchain for transparency." />
+              <HowItWorksStep stepNumber={3} icon={Zap} title="Automated Funding" description="Upon verified milestone completion, IDRX funds are automatically disbursed to the researcher's connected wallet via smart contracts." />
+              <HowItWorksStep stepNumber={4} icon={LinkIcon} title="Collaborate & Connect" description="Utilize the Talent Pool and Project Board to find collaborators or offer your expertise for various research initiatives." />
+          </div>
+        ], [
+          "Understanding IDRX: Stable & Local Funding",
+          "Re.grant utilizes IDRX for all grant funding to ensure stability and local relevance.",
+          <div key="idrx-content" className="grid md:grid-cols-2 gap-10 items-center">
+              <motion.div variants={itemVariants} className="flex justify-center">
+                  <div className="w-full max-w-xs h-56 bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl shadow-lg flex flex-col items-center justify-center p-6">
+                      <span className="text-4xl font-bold text-emerald-700">IDRX</span>
+                      <span className="text-sm text-emerald-600 mt-1">Indonesian Rupiah Stablecoin</span>
+                  </div>
+              </motion.div>
+              <motion.div variants={itemVariants} className="space-y-4">
+                  <p className="text-lg text-gray-600">
+                      IDRX is a stablecoin pegged 1:1 to the Indonesian Rupiah. This means its value is designed to remain stable relative to IDR, eliminating the price volatility often associated with other cryptocurrencies.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700 pl-4">
+                      <li><span className="font-medium">Predictable Value:</span> Researchers receive and manage funds with a stable, familiar value.</li>
+                      <li><span className="font-medium">Local Currency:</span> Simplifies budgeting and accounting for Indonesian users.</li>
+                      <li><span className="font-medium">Blockchain Enabled:</span> Allows for fast, transparent, and low-cost transactions on the Lisk L2 network.</li>
+                  </ul>
+                  <p className="text-sm text-gray-500">
+                      Acquiring and using IDRX on Lisk L2 is straightforward, facilitating seamless participation in the Re.grant ecosystem.
+                  </p>
+              </motion.div>
+          </div>
+        ], [
+            "Key Benefits of Re.grant",
+            "Discover how Re.grant enhances the research lifecycle for everyone involved.",
+            <div key="benefits-content" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <FeatureCard icon={FileText} title="Transparent Grants" description="Apply for and manage research grants with automated, auditable funding disbursements on the Lisk L2 blockchain using IDRX." />
+                <FeatureCard icon={Users} title="Dynamic Talent Pool" description="Discover and connect with skilled students and lecturers. Showcase your expertise and find collaborators for your projects." />
+                <FeatureCard icon={Briefcase} title="Active Project Board" description="Post specific project needs or find opportunities to contribute your skills to ongoing departmental research initiatives."/>
+                <FeatureCard icon={Zap} title="Efficient Workflows" description="Streamlined processes for applications, reviews, and milestone tracking, significantly reducing administrative overhead." />
+                <FeatureCard icon={ShieldCheck} title="Secure & Auditable Records" description="Leverage blockchain for enhanced security, data integrity, and a transparent, immutable record of all grant activities." />
+                <FeatureCard icon={BarChart3} title="Fostering Innovation" description="Built on modern Web3 technology, Re.grant prepares the department for the future of decentralized research and collaboration." />
+            </div>
+        ]].map(([title, subtitle, content], index) => (
+          <motion.section
+            key={title as string}
+            className={`py-16 sm:py-24 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`} // Alternating backgrounds
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }} // Trigger when 20% of the section is visible
+            variants={sectionVariants}
+          >
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div variants={itemVariants} className="text-center mb-12 md:mb-16">
+                <h2 className="text-3xl font-semibold text-gray-800">{title as string}</h2>
+                <p className="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">
+                  {subtitle as string}
+                </p>
+              </motion.div>
+              {content as React.ReactNode}
+            </div>
+          </motion.section>
+        ))}
+
+        {/* Call to Action Section */}
+        <motion.section
+            className="py-16 sm:py-24 bg-primary-blue text-white"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={sectionVariants}
+        >
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <motion.h2 variants={itemVariants} className="text-3xl font-semibold mb-6">Ready to Transform Research in Our Department?</motion.h2>
+                <motion.p variants={itemVariants} className="text-lg text-blue-100 max-w-2xl mx-auto mb-8">
+                    Join Re.grant today to experience a more transparent, efficient, and collaborative approach to academic research funding and project development.
+                </motion.p>
+                <motion.div variants={itemVariants}>
+                    <ConnectButton
+                        label="Connect Wallet & Join Re.grant"
+                        showBalance={false}
+                        chainStatus="none"
+                    />
+                </motion.div>
+                <motion.p variants={itemVariants} className="mt-4 text-xs text-blue-200">
+                    Connecting your wallet is your first step to accessing all platform features.
+                </motion.p>
+            </div>
+        </motion.section>
       </main>
 
-      {/* Features Section */}
-      <section className="py-16 sm:py-24 bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-semibold text-center text-gray-800 mb-12">Platform Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Feature 1: Grants */}
-        <div className="text-center p-6 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50 hover:shadow-md transition-shadow duration-300">
-          <div className="flex justify-center mb-4">
-           <FileText className="h-10 w-10 text-primary-blue" />
+      <motion.footer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="bg-gray-100 py-10 border-t border-gray-200"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-4">
+            <span className="text-sm text-gray-600">Powered by </span>
+            <a href="https://lisk.com/" target="_blank" rel="noopener noreferrer" className="text-sm text-primary-blue hover:underline font-medium">
+              Lisk L2
+            </a>
           </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Transparent Grants</h3>
-          <p className="text-gray-600">Apply for and manage research grants with automated, auditable funding disbursements on the blockchain using IDRX.</p>
-        </div>
-        {/* Feature 2: Talent Pool */}
-        <div className="text-center p-6 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50 hover:shadow-md transition-shadow duration-300">
-           <div className="flex justify-center mb-4">
-           <Users className="h-10 w-10 text-primary-blue" />
-          </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Talent Pool</h3>
-          <p className="text-gray-600">Discover and connect with skilled students and lecturers within the department for research collaboration.</p>
-        </div>
-        {/* Feature 3: Project Board */}
-        <div className="text-center p-6 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50 hover:shadow-md transition-shadow duration-300">
-           <div className="flex justify-center mb-4">
-           <Briefcase className="h-10 w-10 text-primary-blue" />
-          </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Project Board</h3>
-          <p className="text-gray-600">Post specific project needs or find opportunities to contribute your expertise to ongoing research.</p>
-        </div>
-        </div>
-      </div>
-      </section>
-
-      {/* IDRX Section - Enhanced UI */}
-      <section className="py-20 sm:py-28 bg-gradient-to-br from-blue-50 via-sky-50 to-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
-        {/* Logo with subtle animation/effect */}
-        <div className="flex-shrink-0 transform transition duration-500 hover:scale-105">
-          <Image
-            src="/idrx-logo.png"
-            alt="IDRX Logo"
-            width={160} // Slightly larger for emphasis
-            height={80} // Adjust height proportionally
-            className="drop-shadow-md" // Add subtle shadow
-          />
-        </div>
-        {/* Text Content */}
-        <div className="text-center lg:text-left max-w-xl">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Powered by <span className="text-primary-blue">IDRX</span>: Stable & Transparent Funding
-          </h2>
-          <p className="text-gray-600 text-lg mb-6">
-            IDRX, a stablecoin pegged to the Indonesian Rupiah, ensures efficient and auditable grant disbursements on the Lisk L2 blockchain. All funding transactions within Re.grant utilize IDRX for secure value transfer.
-          </p>
-          <a
-            href="https://home.idrx.co/en"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center text-primary-blue font-medium hover:text-blue-700 transition-colors duration-300 group"
-          >
-            Learn More about IDRX
-            <ArrowRight className="ml-2 h-4 w-4 transform transition-transform duration-300 group-hover:translate-x-1" />
-          </a>
-        </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Accessing Funds Section - Enhanced UI */}
-      <section className="py-20 sm:py-28 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-        <h2 className="text-3xl font-semibold text-gray-800 mb-4">Seamlessly Access Your Funds</h2>
-        <p className="text-lg text-gray-600">
-          Convert your IDRX grant funds into Indonesian Rupiah (IDR) easily, enabling you to utilize your funding effectively for research needs.
-        </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {/* Step 1: Receiving Funds */}
-        <div className="bg-gray-50/70 p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center text-center transition duration-300 hover:shadow-lg hover:border-blue-200">
-          <div className="p-4 bg-blue-100 rounded-full mb-5">
-             {/* Using CheckCircle as a placeholder for receiving/success */}
-            <CheckCircle className="h-8 w-8 text-primary-blue" />
-          </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-3">Receive Grants in IDRX</h3>
-          <p className="text-gray-600">
-            Grant funds are securely disbursed directly to your connected wallet as IDRX stablecoins via the Re.grant platform&apos;s smart contracts.
+          <p className="text-sm text-gray-500">
+            &copy; {new Date().getFullYear()} Re.grant - Department of Electrical and Information Engineering.
           </p>
         </div>
-
-        {/* Step 2: Converting to IDR */}
-        <div className="bg-gray-50/70 p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center text-center transition duration-300 hover:shadow-lg hover:border-blue-200">
-          <div className="p-4 bg-blue-100 rounded-full mb-5">
-             {/* Using ArrowRight or similar for conversion/exchange */}
-            <ArrowRight className="h-8 w-8 text-primary-blue" /> {/* Placeholder, consider ArrowRightLeft or Repeat */}
-          </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-3">Convert IDRX to IDR</h3>
-          <p className="text-gray-600">
-            Utilize supported cryptocurrency exchanges or financial platforms to easily convert your IDRX into Indonesian Rupiah for real-world spending.
-          </p>
-        </div>
-          </div>
-
-           {/* Optional: Add a concluding remark or link */}
-           <div className="text-center mt-12 text-gray-500">
-         <p>Manage your research funding with unprecedented ease and transparency.</p>
-         {/*
-         <div className="mt-4">
-           <a href="/path-to-conversion-guide" className="inline-flex items-center text-primary-blue font-medium hover:underline">
-             View Conversion Guide <ArrowRight className="ml-2 h-4 w-4" />
-           </a>
-         </div>
-         */}
-           </div>
-        </div>
-      </section>
-
-      {/* Footer Section */}
-      <footer className="bg-gray-100 py-8 border-t border-gray-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-        &copy; {new Date().getFullYear()} Re.grant - Department of Electrical and Information Engineering. All rights reserved.
-        {/* Add other footer links if needed */}
-      </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }

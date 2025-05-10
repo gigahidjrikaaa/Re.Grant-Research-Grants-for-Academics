@@ -32,7 +32,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex flex-col min-h-screen">
             <Header /> {/* Placeholder for Header */}
-            <main className="flex-grow container">
+            <main className="flex-grow container min-w-screen">
               {children}
             </main>
             {/* <Footer /> Placeholder for Footer */}
