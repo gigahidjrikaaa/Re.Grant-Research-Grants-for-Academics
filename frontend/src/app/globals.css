@@ -1,217 +1,98 @@
+/* frontend/src/app/globals.css */
+
+/* Import Tailwind's base, components, and utilities.
+  This is the primary way to include Tailwind in v4+.
+*/
 @import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
+/*
+  Define your theme using CSS variables.
+  This is the core of Tailwind v4's theming philosophy, especially when working
+  with component libraries like Shadcn UI.
+*/
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* HSL values mapped from your brand's hex colors */
+    /* Primary Blue: #1E3A8A  -> hsl(226, 66%, 32%) */
+    /* Accent Yellow: #D97706 -> hsl(33, 90%, 43%) */
+    /* Brand Background: #F9FAFB -> hsl(220, 17%, 97%) */
+    /* Content Background: #FFFFFF -> hsl(0, 0%, 100%) */
+    /* Text Primary: #1F2937 -> hsl(215, 28%, 17%) */
+    /* Text Secondary: #6B7280 -> hsl(215, 14%, 47%) */
+    /* Border Primary: #E5E7EB -> hsl(215, 16%, 90%) */
+    /* Border Input: #D1D5DB -> hsl(216, 15%, 84%) */
+    /* Ring Color: Brighter primary blue -> hsl(226, 66%, 42%) */
+    /* Sky-300 for text shadow: #7DD3FC -> hsl(199, 95%, 74%) */
+
+    --background: 220 17% 97%;      /* Used for `bg-background` utility if needed, and directly below */
+    --foreground: 215 28% 17%;      /* Used for `text-foreground` utility if needed, and directly below */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 28% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 28% 17%;
 
-    --primary: 221.2 83.2% 53.3%; /* Adjusted primary blue */
-    --primary-foreground: 210 40% 98%;
-    --primary-blue: 221.2 83.2% 53.3%; /* Explicit primary blue variable */
+    --primary-blue: 226 66% 32%;
+    --primary-foreground: 0 0% 100%;
 
+    --secondary: 215 16% 90%;
+    --secondary-foreground: 215 28% 17%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 215 16% 94%;
+    --muted-foreground: 215 14% 47%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 33 90% 43%;
+    --accent-foreground: 0 0% 100%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --border: 215 16% 90%;
+    --input: 216 15% 84%;
+    --ring: 226 66% 42%; /* For focus rings */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%; /* Ring color matches primary */
+    --radius: 0.5rem; /* Default border radius for Shadcn UI */
 
-    --radius: 0.5rem;
+    --sky-300-hsl: 199 95% 74%; /* For text-shadow utility */
+    /* Add any other global CSS variables your project needs */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217.2 91.2% 59.8%; /* Adjusted dark primary blue */
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --primary-blue: 217.2 91.2% 59.8%; /* Explicit dark primary blue */
-
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%; /* Dark ring color matches dark primary */
+    /* Define your dark mode palette here using the same CSS variable names */
+    /* Example:
+    --background: 215 28% 17%;
+    --foreground: 220 17% 97%;
+    ... and so on
+    */
   }
 }
 
-/* Custom animation for background elements */
-@keyframes moveAround {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(20px, -30px) scale(1.05); }
-  50% { transform: translate(-10px, 25px) scale(0.95); }
-  75% { transform: translate(-25px, -15px) scale(1.02); }
+@layer base {
+  body {
+    /* Apply base styles directly using CSS variables */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  html {
+    /* Ensure your Inter font (or chosen sans-serif) is applied globally */
+    /* This assumes --font-inter is set by next/font in your layout.tsx */
+    font-family: var(--font-inter, Inter, system-ui, sans-serif);
+  }
 }
 
-.animate-move-around {
-  animation: moveAround 20s infinite ease-in-out; /* Default duration, can be overridden */
-}
-
-/* Specific styles for background decorations */
-.bg-decoration-1 {
-  animation-duration: 18s;
-  animation-delay: 0s;
-}
-
-.bg-decoration-2 {
-  animation-duration: 22s;
-  animation-delay: 3s;
-}
-
-.bg-decoration-3 {
-  animation-duration: 20s;
-  animation-delay: 1.5s;
-}
-
-.text-primary-blue {
-  color: hsl(var(--primary-blue));
-}
-
-.gradient-blue {
-  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-}
+/*
+  The @theme directive can be used here to extend Tailwind's default theme
+  directly in CSS, as per the v4 philosophy, for things not covered by CSS variables.
+  Example:
+  @theme {
+    extend: {
+      spacing: {
+        '128': '32rem',
+      }
+    }
+  }
+  For colors primarily used by Shadcn UI, CSS variables defined in :root are the standard.
+*/

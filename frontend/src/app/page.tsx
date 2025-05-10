@@ -6,9 +6,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ArrowRight, Users, FileText, Briefcase, Zap, ShieldCheck, Lightbulb, BarChart3, LinkIcon, CheckCircle } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react'; // Added useRef, useState
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'; // Added useMotionValue, useSpring
+import { motion, useScroll, useTransform, useMotionValue, useSpring, MotionValue } from 'framer-motion';
 
 // Placeholder Logo component or SVG
 const Logo = () => (
@@ -115,16 +115,80 @@ const HowItWorksStep: React.FC<HowItWorksStepProps> = ({ icon: Icon, title, desc
   </motion.div>
 );
 
+// OrbItem component with continuous animation + cursor parallax
+interface OrbItemProps {
+    orb: {
+        id: number;
+        size: number;
+        color: string;
+        intensity: number; // For cursor parallax strength
+        blur: string;
+        initialOffsetX: string;
+        initialOffsetY: string;
+        // New properties for continuous animation
+        continuousAnimDuration: number;
+        continuousAnimScaleTo: number;
+        continuousAnimXRange: string[]; // e.g., ["-5%", "5%"]
+        continuousAnimYRange: string[]; // e.g., ["-5%", "5%"]
+    };
+    springMouseX: MotionValue<number>;
+    springMouseY: MotionValue<number>;
+}
+
+const OrbItem: React.FC<OrbItemProps> = ({ orb, springMouseX, springMouseY }) => {
+    // Cursor Parallax Transforms
+    const dx = useTransform(springMouseX, val => val * orb.intensity);
+    const dy = useTransform(springMouseY, val => val * orb.intensity);
+
+    return (
+        <motion.div
+            className="absolute rounded-full"
+            style={{
+                width: orb.size,
+                height: orb.size,
+                left: `calc(50% + ${orb.initialOffsetX})`,
+                top: `calc(50% + ${orb.initialOffsetY})`,
+                translateX: "-50%",
+                translateY: "-50%",
+                x: dx, // Apply cursor parallax
+                y: dy, // Apply cursor parallax
+                backgroundColor: orb.color,
+                filter: `blur(${orb.blur})`,
+                opacity: 0.6, // Base opacity for softer look
+            }}
+            initial={{ scale: 0.8, opacity: 0 }} // Initial entrance animation
+            animate={{ // Continuous animation + entrance
+                scale: [0.9, orb.continuousAnimScaleTo, 0.9], // Entrance + continuous pulse
+                opacity: [0, 0.6, 0.6, 0.6, 0], // Fade in, stay, fade out slightly for pulse
+                x: [dx.get(), ...orb.continuousAnimXRange.map(val => `calc(${dx.get()}px + ${val})`), dx.get()], // Combine with cursor parallax
+                y: [dy.get(), ...orb.continuousAnimYRange.map(val => `calc(${dy.get()}px + ${val})`), dy.get()], // Combine with cursor parallax
+            }}
+            transition={{
+                // Entrance part
+                // duration: 1.5, // Handled by continuous loop's first iteration
+                // delay: Math.random() * 0.5,
+                // ease: "circOut",
+
+                // Continuous animation part
+                repeat: Infinity,
+                repeatType: "mirror",
+                duration: orb.continuousAnimDuration + Math.random() * 3, // Vary duration for natural feel
+                ease: "easeInOut",
+                delay: Math.random() * 2, // Stagger start of continuous animation
+            }}
+        />
+    );
+};
+
+
 // Updated Animated Geometric Background for Hero with Cursor Interaction
 const AnimatedHeroBackground = () => {
-    const heroRef = useRef<HTMLDivElement>(null); // Ref for the hero section to get bounds
+    const heroRef = useRef<HTMLDivElement>(null);
 
-    // Mouse position relative to the hero section
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
 
-    // Spring-animated values for smoother following
-    const springConfig = { stiffness: 100, damping: 20, mass: 1 };
+    const springConfig = { stiffness: 80, damping: 25, mass: 1 }; // Slightly softer spring
     const springMouseX = useSpring(mouseX, springConfig);
     const springMouseY = useSpring(mouseY, springConfig);
 
@@ -132,82 +196,58 @@ const AnimatedHeroBackground = () => {
         const handleMouseMove = (event: MouseEvent) => {
             if (heroRef.current) {
                 const rect = heroRef.current.getBoundingClientRect();
-                // Calculate mouse position relative to the center of the hero section
                 const x = event.clientX - rect.left - rect.width / 2;
                 const y = event.clientY - rect.top - rect.height / 2;
                 mouseX.set(x);
                 mouseY.set(y);
             }
         };
-
-        const currentHeroRef = heroRef.current; // Capture ref value
+        // Attach to the hero section itself, not the background div for correct coords
+        // This means the parent <section> where AnimatedHeroBackground is used should have the ref.
+        // For simplicity here, we assume heroRef is on this component's root div.
+        const currentHeroRef = heroRef.current;
         if (currentHeroRef) {
             currentHeroRef.addEventListener('mousemove', handleMouseMove);
         }
-
         return () => {
             if (currentHeroRef) {
                 currentHeroRef.removeEventListener('mousemove', handleMouseMove);
             }
         };
-    }, [mouseX, mouseY]); // Depend on mouseX, mouseY to re-attach if needed (though typically not)
+    }, [mouseX, mouseY]);
 
-    // Orb configurations
+    // Orb configurations with continuous animation parameters
     const orbs = [
-        { id: 1, size: 300, color: "hsl(220, 90%, 65%)", intensity: 0.03, blur: "80px", initialOffsetX: "-20%", initialOffsetY: "-10%" },
-        { id: 2, size: 450, color: "hsl(210, 95%, 70%)", intensity: 0.05, blur: "100px", initialOffsetX: "25%", initialOffsetY: "15%" },
-        { id: 3, size: 250, color: "hsl(35, 100%, 60%)", intensity: 0.04, blur: "70px", initialOffsetX: "0%", initialOffsetY: "30%" }, // Ochre accent
-        { id: 4, size: 350, color: "hsl(230, 85%, 75%)", intensity: 0.025, blur: "90px", initialOffsetX: "15%", initialOffsetY: "-25%" },
+        { id: 1, size: 300, color: "hsl(220, 90%, 65%)", intensity: 0.04, blur: "90px", initialOffsetX: "-25%", initialOffsetY: "-15%", continuousAnimDuration: 12, continuousAnimScaleTo: 1.2, continuousAnimXRange: ["-8%", "8%"], continuousAnimYRange: ["-6%", "6%"] },
+        { id: 2, size: 480, color: "hsl(210, 95%, 70%)", intensity: 0.06, blur: "120px", initialOffsetX: "30%", initialOffsetY: "20%", continuousAnimDuration: 15, continuousAnimScaleTo: 1.15, continuousAnimXRange: ["-5%", "5%"], continuousAnimYRange: ["-10%", "10%"] },
+        { id: 3, size: 220, color: "hsl(35, 100%, 60%)", intensity: 0.03, blur: "80px", initialOffsetX: "5%", initialOffsetY: "35%", continuousAnimDuration: 10, continuousAnimScaleTo: 1.3, continuousAnimXRange: ["6%", "-6%"], continuousAnimYRange: ["8%", "-8%"] },
+        { id: 4, size: 380, color: "hsl(230, 85%, 75%)", intensity: 0.02, blur: "100px", initialOffsetX: "20%", initialOffsetY: "-30%", continuousAnimDuration: 14, continuousAnimScaleTo: 1.2, continuousAnimXRange: ["-7%", "7%"], continuousAnimYRange: ["-7%", "7%"] },
     ];
 
     return (
+        // The heroRef should ideally be on the parent <section> in LandingPage for mousemove relative to the whole section.
+        // If it's on this div, mousemove is relative to this div's bounds.
         <div ref={heroRef} className="absolute inset-0 overflow-hidden z-0">
             {/* Static subtle grid for base texture if desired */}
-            <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute inset-0 opacity-[0.02]"> {/* Further reduced opacity for grid */}
                 <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        <pattern id="subtleGrid" patternUnits="userSpaceOnUse" width="50" height="50">
-                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="hsla(222, 47%, 50%, 0.4)" strokeWidth="0.3"/>
+                        <pattern id="subtleGrid" patternUnits="userSpaceOnUse" width="60" height="60">
+                            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="hsla(222, 47%, 50%, 0.3)" strokeWidth="0.2"/>
                         </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#subtleGrid)" />
                 </svg>
             </div>
 
-            {/* Cursor-following Orbs */}
-            {orbs.map(orb => {
-                // Transform mouse position for parallax effect (different intensity for each orb)
-                // Orbs further "behind" move less
-                const dx = useTransform(springMouseX, val => val * orb.intensity);
-                const dy = useTransform(springMouseY, val => val * orb.intensity);
-
-                return (
-                    <motion.div
-                        key={orb.id}
-                        className="absolute rounded-full"
-                        style={{
-                            width: orb.size,
-                            height: orb.size,
-                            // Position orbs around the center initially, then react to mouse
-                            // Using translate to ensure they are centered before mouse movement
-                            left: `calc(50% + ${orb.initialOffsetX})`,
-                            top: `calc(50% + ${orb.initialOffsetY})`,
-                            translateX: "-50%", // Center the orb
-                            translateY: "-50%", // Center the orb
-                            x: dx, // Apply parallax based on mouse
-                            y: dy, // Apply parallax based on mouse
-                            backgroundColor: orb.color,
-                            filter: `blur(${orb.blur})`,
-                            opacity: 0.5, // Adjust base opacity for softer look
-                            // No direct boxShadow for neon, as blur and color achieve the soft glow
-                        }}
-                        // Optional: Add a subtle initial animation for the orbs themselves
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 0.5 }}
-                        transition={{ duration: 1.5, delay: Math.random() * 0.5, ease: "circOut" }}
-                    />
-                );
-            })}
+            {orbs.map(orb => (
+                <OrbItem
+                    key={orb.id}
+                    orb={orb}
+                    springMouseX={springMouseX}
+                    springMouseY={springMouseY}
+                />
+            ))}
         </div>
     );
 };
@@ -216,6 +256,7 @@ const AnimatedHeroBackground = () => {
 export default function LandingPage() {
   const { isConnected, address } = useAccount();
   const router = useRouter();
+  const heroSectionRef = useRef<HTMLDivElement>(null); // Ref for the hero <section>
 
   useEffect(() => {
     if (isConnected && address) {
@@ -256,9 +297,11 @@ export default function LandingPage() {
 
       <main className="flex-grow">
         {/* Hero Section */}
-        {/* The parent <section> needs to be the reference for mousemove if AnimatedHeroBackground is a direct child */}
-        <section className="relative py-20 md:py-32 lg:py-36 overflow-hidden bg-white">
-          <AnimatedHeroBackground /> {/* Animated background */}
+        {/* Pass the ref to the section for mouse move detection */}
+        <section ref={heroSectionRef} className="relative py-20 md:py-32 lg:py-36 overflow-hidden bg-white">
+          {/* Pass the heroSectionRef to the AnimatedHeroBackground if it needs to calculate bounds relative to this section */}
+          {/* For simplicity, AnimatedHeroBackground's internal ref will work if it fills the section */}
+          <AnimatedHeroBackground />
           <motion.div
             className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center z-10"
             initial="hidden"
