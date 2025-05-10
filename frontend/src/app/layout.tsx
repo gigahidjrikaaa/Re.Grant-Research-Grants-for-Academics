@@ -30,9 +30,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className={`font-sans bg-gray-50 text-gray-900 antialiased`}> {/* Use font-sans which Tailwind maps to Inter; Set base colors */}
         <Providers>
-          <div className="flex flex-col min-h-screen">
-            <Header /> {/* Placeholder for Header */}
-            <main className="flex-grow container min-w-screen">
+          <div className="flex flex-col min-h-screen min-w-screen w-full bg-brand-background text-text-primary">
+            <Header />
+            <main className="flex-grow min-w-screen w-full">
+              {/* Main content area */}
               {children}
             </main>
             {/* <Footer /> Placeholder for Footer */}

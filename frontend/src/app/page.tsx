@@ -27,7 +27,7 @@ export default function LandingPage() {
   // This loading/redirect state can remain if you want to prevent landing page view for connected users.
   if (isConnected) {
       return (
-          <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-brand-background">
+          <div className="flex flex-col items-center justify-center min-h-screen min-w-screen p-6 bg-brand-background">
             <p className="text-text-secondary">Redirecting to Re.grant platform...</p>
             {/* Optionally, you could render null or a spinner, and layout.tsx handles the main app view */}
           </div>
@@ -35,9 +35,9 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-brand-background text-text-primary">
+    <div className="flex flex-col min-h-screen min-w-screen w-full bg-brand-background text-text-primary">
       {/* The global Header is rendered by src/app/layout.tsx */}
-      <main className="flex-grow">
+      <main className="flex-grow min-w-screen w-full">
         <HeroSection />
         <WhatIsRegrantSection />
         <HowRegrantWorksSection />
