@@ -1,33 +1,38 @@
+# filepath: d:\Astaga Ngoding\Github\Re.Grant-Research-Grants-for-Academics\docker-compose.yml
 version: '3.8'
 
 services:
   frontend:
     build:
       context: ./frontend
+      args:
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+        NEXT_PUBLIC_XELLAR_APP_ID: ${NEXT_PUBLIC_XELLAR_APP_ID}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000/api} # Updated port
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.next # Add this to prevent host .next from overwriting container's .next in dev
     depends_on:
       - backend
-    environment:
-      - REACT_APP_API_URL=http://backend:5000/api
+    # The command will be overridden in docker-compose.override.yml for development
 
   backend:
     build:
       context: ./backend
     ports:
-      - "5000:5000"
+      - "8000:8000" # Corrected port based on your Dockerfile
     volumes:
       - ./backend:/app
-      - /app/node_modules
     depends_on:
       - database
     environment:
       - DATABASE_URL=postgres://user:password@database:5432/regrant
-      - NODE_ENV=development
-      - PORT=5000
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=8000 # Corrected port
+    # The command will be overridden in docker-compose.override.yml for development
 
   database:
     image: postgres:14-alpine
