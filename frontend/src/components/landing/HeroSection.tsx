@@ -28,8 +28,7 @@ const HeroSection: React.FC = () => {
         >
           <span className="block">Empowering Research with</span>
           <span
-            className="block pb-1 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 text-transparent bg-clip-text mt-1 sm:mt-2 [text-shadow:0_0_8px_var(--tw-shadow-color)/0.5] hover:[text-shadow:0_0_16px_var(--tw-shadow-color)/0.8] transition-all duration-300 ease-in-out"
-            style={{ '--tw-shadow-color': 'oklch(0.74 0.188 208.05)' } as React.CSSProperties} // Corresponds to theme(colors.sky.300)
+            className="block pb-1 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 text-transparent bg-clip-text mt-1 sm:mt-2 [text-shadow:0_0_8px_oklch(0.74_0.188_208.05)/0.5] hover:[text-shadow:0_0_16px_oklch(0.74_0.188_208.05)/0.8] transition-all duration-300 ease-in-out"
           >
             Transparent & Efficient Funding
           </span>

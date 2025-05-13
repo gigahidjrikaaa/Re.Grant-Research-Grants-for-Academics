@@ -1,6 +1,7 @@
 // frontend/src/components/layout/CustomConnectWalletButton.tsx
 'use client';
 
+import Image from 'next/image'; // Import the Image component
 import React, { useEffect, useState } from 'react'; // Added useEffect and useState
 import { useAccount, useDisconnect as useWagmiDisconnect } from 'wagmi';
 import { useWallet as useMeshSDKWallet } from '@meshsdk/react';
@@ -157,7 +158,7 @@ const CustomConnectWalletButton: React.FC = () => {
           {meshAvailableWallets && meshAvailableWallets.length > 0 ? (
             meshAvailableWallets.map((wallet: IMeshWallet) => (
               <DropdownMenuItem key={wallet.name} onClick={() => handleConnectMeshJS(wallet.name)} className="cursor-pointer">
-                <img src={wallet.icon} alt={`${wallet.name} icon`} className="mr-2 h-4 w-4" />
+                <Image src={wallet.icon} alt={`${wallet.name} icon`} className="mr-2 h-4 w-4" width={16} height={16} />
                 {wallet.name}
               </DropdownMenuItem>
             ))
