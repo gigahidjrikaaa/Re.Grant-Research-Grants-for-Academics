@@ -3,7 +3,7 @@
 
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+// import { ConnectButton as XellarConnectButton } from '@xellar/kit'; // Import Xellar's ConnectButton
 import AnimatedHeroBackground from './AnimatedHeroBackground';
 import { sectionVariants, itemVariants } from './motionVariants'; // Import shared variants
 
@@ -41,14 +41,15 @@ const HeroSection: React.FC = () => {
           Re.grant utilizes Lisk L2 blockchain to streamline research grant management and foster collaboration within the Department of Electrical and Information Engineering.
         </motion.p>
         <motion.div variants={itemVariants} className="mt-10 flex justify-center">
-          <ConnectButton
-            label="Connect Wallet & Get Started"
-            showBalance={false}
-            chainStatus="none"
-          />
+            {/* <XellarConnectButton
+                // label="Connect Wallet & Get Started" // Check Xellar docs for label prop
+                // showBalance={false} // Check Xellar docs for similar props
+                // chainStatus="none" // Check Xellar docs for similar props
+            /> */}
+
         </motion.div>
         <motion.p variants={itemVariants} className="mt-4 text-xs text-text-muted">
-          Connect your EVM-compatible wallet to access the platform.
+          Connect your EVM-compatible wallet using Xellar to access the platform.
         </motion.p>
       </motion.div>
     </section>

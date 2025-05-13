@@ -5,8 +5,6 @@ import "./globals.css"; // Includes Tailwind base styles
 import '@rainbow-me/rainbowkit/styles.css'; // RainbowKit styles
 import { Providers } from "./providers";
 import Header from "@/components/layout/Header";
-// Import Header/Footer/Sidebar components later when created
-// import Header from "@/components/layout/Header";
 
 // Setup the Inter font
 const inter = Inter({

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+// import { ConnectButton as XellarConnectButton } from '@xellar/kit'; // Import Xellar's ConnectButton
 import { sectionVariants, itemVariants } from './motionVariants';
 
 const LandingCtaSection: React.FC = () => {
@@ -21,11 +21,11 @@ const LandingCtaSection: React.FC = () => {
                 Join Re.grant today to experience a more transparent, efficient, and collaborative approach to academic research funding and project development.
             </motion.p>
             <motion.div variants={itemVariants}>
-                <ConnectButton
-                    label="Connect Wallet & Join Re.grant"
-                    showBalance={false}
-                    chainStatus="none"
-                />
+                {/* <XellarConnectButton
+                    // label="Connect Wallet & Join Re.grant" // Check Xellar docs
+                    // showBalance={false}
+                    // chainStatus="none"
+                /> */}
             </motion.div>
             <motion.p variants={itemVariants} className="mt-4 text-xs text-blue-200"> {/* text-blue-200 can be themed */}
                 Connecting your wallet is your first step to accessing all platform features.
