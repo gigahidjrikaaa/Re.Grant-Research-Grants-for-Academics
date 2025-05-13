@@ -2,67 +2,100 @@
 'use client';
 
 import React from 'react';
-import { Config, WagmiProvider } from 'wagmi';
+import { WagmiProvider, Config as WagmiConfigType } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { XellarKitProvider, defaultConfig as xellarDefaultConfig, darkTheme as xellarDarkTheme } from '@xellar/kit';
-import { MeshProvider } from "@meshsdk/react"; // Keep if Cardano part is still active
-import { supportedChains } from '@/lib/chains'; // Import your chains
-import { polygonAmoy } from 'viem/chains';
+import { RainbowKitProvider, darkTheme as rainbowDarkTheme, Theme as RainbowTheme } from '@rainbow-me/rainbowkit';
+import { MeshProvider } from "@meshsdk/react";
 
-// Ensure environment variables are handled (ideally, check them here or log for debugging)
-const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
-const xellarAppId = process.env.NEXT_PUBLIC_XELLAR_APP_ID || "";
-const xellarEnv = process.env.NEXT_PUBLIC_XELLAR_ENV === 'production' ? 'production' : 'sandbox';
+import { wagmiConfig as rainbowWagmiConfig } from '@/lib/wagmi'; // Your RainbowKit-based wagmi config
+// Placeholder for Xellar's Wagmi config:
+// import { wagmiConfig as xellarWagmiConfig } from '@/lib/xellarWagmiConfig';
 
-if (!walletConnectProjectId) {
-    console.warn("Providers.tsx: WalletConnect Project ID (NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) not found.");
-}
-if (!xellarAppId) {
-    console.warn("Providers.tsx: Xellar App ID (NEXT_PUBLIC_XELLAR_APP_ID) not found.");
-}
+import { CombinedWalletProvider, useAppWalletProvider } from '@/contexts/WalletProviderContext'; // Use renamed hook
+import { WalletProviderType } from '@/lib/wallet-providers/types';
+import XellarKitWalletProviderWrapper from '@/lib/wallet-providers/XellarKitWalletProvider'; // Your wrapper
 
-console.log("--- Xellar Config Inputs ---");
-console.log("WalletConnect Project ID:", walletConnectProjectId); // Should be your WC ID string
-console.log("Xellar App ID:", xellarAppId); // Should be your Xellar App ID string
-console.log("Xellar Env:", xellarEnv); // Should be 'sandbox' or 'production'
-console.log("Chains:", JSON.stringify(supportedChains, null, 2));
-console.log("--- End Xellar Config Inputs ---");
-
-const config = xellarDefaultConfig({
-  appName: 'Regrant', // Your application's name
-  walletConnectProjectId: "77dc0c61-e855-4e79-9335-53063de168b0", // From .env.local
-  xellarAppId,            // From .env.local
-  xellarEnv: "sandbox",              // 'sandbox' or 'production', from .env.local
-  chains: [polygonAmoy],  // Your defined chains (e.g., [liskSepolia])
-  ssr: false,                // For Next.js App Router
-}) as Config; // Cast to Wagmi's Config type
-
-const queryClient = new QueryClient();
-
-// Custom hook to ensure component is mounted (prevents hydration errors)
 function useIsMounted() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
   return mounted;
 }
 
+const regrantRainbowTheme = {
+  ...rainbowDarkTheme({
+    accentColor: 'hsl(var(--primary))',
+    accentColorForeground: 'hsl(var(--primary-foreground))',
+    borderRadius: 'medium',
+  }),
+} as RainbowTheme;
+
+const queryClient = new QueryClient();
+
+// This inner component selects the actual wallet kit provider based on context
+const WalletSystemProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { activeProviderType } = useAppWalletProvider(); // Use renamed hook
+
+  // Determine which Wagmi config to use.
+  // When Xellar is integrated, this logic will choose between rainbowWagmiConfig and xellarWagmiConfig.
+  const currentWagmiConfig: WagmiConfigType = rainbowWagmiConfig; // Default to RainbowKit's Wagmi config
+  // if (activeProviderType === WalletProviderType.XellarKit && xellarWagmiConfig) {
+  //   currentWagmiConfig = xellarWagmiConfig;
+  // }
+
+  // Conditionally render providers
+  if (activeProviderType === WalletProviderType.RainbowKit) {
+    return (
+      <WagmiProvider config={currentWagmiConfig} reconnectOnMount={true}> {/* Or manage reconnect based on actual connection state */}
+        <RainbowKitProvider theme={regrantRainbowTheme} modalSize="compact">
+          {children}
+        </RainbowKitProvider>
+      </WagmiProvider>
+    );
+  }
+
+  if (activeProviderType === WalletProviderType.XellarKit) {
+    return (
+      <WagmiProvider config={currentWagmiConfig} reconnectOnMount={true}> {/* This will use xellarWagmiConfig when ready */}
+        <XellarKitWalletProviderWrapper> {/* This wrapper will contain the actual <XellarKitProvider> */}
+          {children}
+        </XellarKitWalletProviderWrapper>
+      </WagmiProvider>
+    );
+  }
+
+  if (activeProviderType === WalletProviderType.MeshJS) {
+    return (
+      <MeshProvider>
+        {children}
+      </MeshProvider>
+    );
+  }
+
+  // Fallback: If no specific provider is active (WalletProviderType.None),
+  // provide a base WagmiProvider context so Wagmi hooks don't break before a connection attempt.
+  // It uses the default (RainbowKit's) config, but no kit-specific UI provider is active.
+  return (
+    <WagmiProvider config={rainbowWagmiConfig} reconnectOnMount={true}> {/* Default for EVM */}
+      {children}
+    </WagmiProvider>
+  );
+};
+
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const isMounted = useIsMounted();
 
   if (!isMounted) {
-    // Render nothing or a loading indicator on the server/initial render
     return null;
   }
 
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <XellarKitProvider theme={xellarDarkTheme}>
-          <MeshProvider>
+    <QueryClientProvider client={queryClient}>
+      <CombinedWalletProvider initialProviderType={WalletProviderType.None}>
+        <WalletSystemProviders>
             {children}
-          </MeshProvider>
-        </XellarKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </WalletSystemProviders>
+      </CombinedWalletProvider>
+    </QueryClientProvider>
   );
 }

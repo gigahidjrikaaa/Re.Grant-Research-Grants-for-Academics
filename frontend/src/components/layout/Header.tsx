@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import CustomConnectWalletButton from './CustomConnectWalletButton';
 
 // Logo component (remains the same)
 const Logo = () => (
@@ -44,12 +45,8 @@ export default function Header() {
 
         <div className="flex items-center space-x-3">
            <div className="flex-shrink-0">
-             {/* Replace RainbowKit's ConnectButton with Xellar's */}
-             {/* <XellarConnectButton /> */}
-             {/* You might need to customize XellarConnectButton props based on their docs */}
-             {/* e.g., label, accountStatus, chainStatus, showBalance like RainbowKit if supported */}
+             <CustomConnectWalletButton /> {/* Use the new custom button */}
            </div>
-
            <Button
              variant="ghost"
              size="icon"
