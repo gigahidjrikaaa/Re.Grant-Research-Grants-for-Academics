@@ -4,18 +4,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
-  User, Edit, Save, XCircle, Linkedin, Github, Globe, Link as LinkIcon, BookOpen, Award, Briefcase, GraduationCap, Lightbulb, Eye, EyeOff
+  User, Edit, Save, XCircle, Linkedin, Link as Eye, EyeOff
 } from 'lucide-react';
-import Link from 'next/link'; // For external links if needed
+// import Link from 'next/link'; // For external links if needed
 import { toast } from "sonner";
 import { shortenAddress } from '@/lib/utils';
 // import { useForm, useFieldArray, Controller } from 'react-hook-form'; // For editing
