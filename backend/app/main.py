@@ -3,13 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
 from app.core.config import settings
 from app.api.v1.api import api_router as api_v1_router
-# from app.db.database import engine # If using SQLAlchemy and need to create tables on startup
-# from app.db import base_class # To create tables
+from app.db.database import engine # If using SQLAlchemy and need to create tables on startup
+from app.db.base_class import Base # To create tables
 
 # Create all tables in the database (only for initial setup, use Alembic for migrations)
 # This is a simple way for hackathons but not ideal for production evolution.
-# def create_tables():
-#     base_class.Base.metadata.create_all(bind=engine)
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -26,11 +26,15 @@ if settings.CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-# @app.on_event("startup")
-# async def startup_event():
-#     print("Application startup")
-#     # create_tables() # Create tables if they don't exist (for SQLAlchemy)
-#     # You can add other startup logic here, like connecting to external services
+@app.on_event("startup")
+async def startup_event():
+    print("Application startup: Initializing database (if needed)...")
+    # For development/hackathon, you might create tables here if they don't exist.
+    # In production, rely solely on Alembic.
+    # init_db() # Uncomment if you want to auto-create tables on startup
+    print("Application startup complete.")
+
+app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
