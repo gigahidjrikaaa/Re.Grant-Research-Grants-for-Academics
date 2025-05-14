@@ -3,7 +3,7 @@ from typing import Optional, List, Union, Dict, Any
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
-from app.core.security import get_password_hash # If you implement password hashing
+# from app.core.security import get_password_hash # If you implement password hashing
 
 def get_user(db: Session, user_id: int) -> Optional[User]:
     return db.query(User).filter(User.id == user_id).first()

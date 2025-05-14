@@ -22,6 +22,10 @@ venv/
 ENV/
 .pytest_cache/
 
+# Alembic
+alembic.ini
+alembic_version.py
+
 # Docker
 docker-compose.override.yml
 .dockerignore

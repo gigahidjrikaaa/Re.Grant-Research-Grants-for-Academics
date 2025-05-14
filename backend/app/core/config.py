@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/regrant" #! Example, load from .env
+    DATABASE_URL: str = "postgresql+psycopg2://user:password@localhost:5432/regrant" #! Example, load from .env
 
     # JWT Settings (Example if using JWTs after wallet auth)
     SECRET_KEY: str = "YOUR_SUPER_SECRET_KEY" # Load from .env, generate a strong one
