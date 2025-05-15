@@ -33,9 +33,9 @@ def create_user(db: Session, user_in: UserCreate) -> User:
         wallet_address=user_in.wallet_address,
         email=user_in.email,
         full_name=user_in.full_name,
-        role=user_in.role,
-        is_active=user_in.is_active,
-        is_superuser=user_in.is_superuser
+        role=user_in.role, # Ensure role is correctly handled (enum vs string)
+        is_active=user_in.is_active if user_in.is_active is not None else True,
+        is_superuser=user_in.is_superuser if user_in.is_superuser is not None else False
     )
     db.add(db_user)
     db.commit()

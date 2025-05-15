@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordBearer # We might use this for expecting JWT later
 from sqlalchemy.orm import Session
-from typing import Any
+from typing import Annotated, Any
+from datetime import timedelta
 
 from app import crud, models, schemas
 from app.core import security
@@ -14,9 +15,9 @@ router = APIRouter()
 # We will define get_current_user in deps.py later
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token") # Example if you had a form login
 
-@router.post("/siwe/nonce", response_model=schemas.NonceResponse)
+@router.get("/siwe/nonce", response_model=schemas.NonceResponse)
 async def get_siwe_nonce(
-    wallet_address: str # Could be a query param or request body
+    wallet_address: Annotated[str, Query(description="The wallet address to generate a nonce for.")]
 ) -> Any:
     """
     Generate a nonce for SIWE for a given wallet address.
@@ -46,7 +47,7 @@ async def login_with_siwe(
         message=login_data.message,
         signature=login_data.signature,
         provided_address=login_data.address,
-        nonce=login_data.nonce
+        provided_nonce=login_data.nonce
     )
     if not user:
         raise HTTPException(

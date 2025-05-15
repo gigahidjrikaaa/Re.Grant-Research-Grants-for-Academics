@@ -16,14 +16,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
-import { Wallet as WalletIcon, LogOut, ChevronDown } from 'lucide-react';
+import { Wallet as WalletIcon, LogOut, ChevronDown, UserCheck, ShieldAlert } from 'lucide-react';
 import { useAppWalletProvider } from '@/contexts/WalletProviderContext';
 import { WalletProviderType } from '@/lib/wallet-providers/types';
 import { shortenAddress } from '@/lib/utils';
-import { useConnectModal as useRainbowConnectModalHook } from '@rainbow-me/rainbowkit'; // Renamed to avoid confusion in this component
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { toast } from 'sonner';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 const CustomConnectWalletButton: React.FC = () => {
-  const { address: evmAddress, isConnected: isEvmConnected, connector: evmConnector } = useAccount();
+  const { address: evmAddress, isConnected: isEvmConnected } = useAccount();
+  // We're not using disconnectEvm directly as appLogout handles wallet disconnection
   const { disconnect: disconnectEvm } = useWagmiDisconnect();
 
   const {
@@ -39,39 +42,50 @@ const CustomConnectWalletButton: React.FC = () => {
     getMeshAvailableWallets,
   } = useAppWalletProvider();
 
-  // Get the modal hook function from RainbowKit
-  // This hook itself should be fine to call, but openRainbowModal might be undefined
-  // if RainbowKitProvider is not an ancestor.
-  const { openConnectModal: openRainbowModal } = useRainbowConnectModalHook();
-
+  const { loginWithSiwe, user: authenticatedUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const meshAvailableWallets = getMeshAvailableWallets();
 
-  // State to ensure modal is opened after provider is set
-  const [shouldOpenRainbowModal, setShouldOpenRainbowModal] = useState(false);
+  const { openConnectModal: openRainbowModalFromHook, connectModalOpen } = useConnectModal(); // Get connectModalOpen state
+  const [isAttemptingRainbowConnect, setIsAttemptingRainbowConnect] = useState(false);
 
+  // Automatically attempt SIWE login after EVM wallet connection if not already authenticated
   useEffect(() => {
-    if (shouldOpenRainbowModal && activeProviderType === WalletProviderType.RainbowKit && openRainbowModal) {
-      openRainbowModal();
-      setShouldOpenRainbowModal(false); // Reset
-    } else if (shouldOpenRainbowModal && activeProviderType === WalletProviderType.RainbowKit && !openRainbowModal) {
-      // This case indicates RainbowKitProvider might not be ready yet, or hook issue
-      console.error("CustomConnectWalletButton: Tried to open Rainbow modal, but openConnectModal is still not available. Provider rendering issue?");
-      setShouldOpenRainbowModal(false); // Reset to prevent loops
+    if (isEvmConnected && evmAddress && !isAuthenticated && !isAuthLoading &&
+        (activeProviderType === WalletProviderType.RainbowKit || activeProviderType === WalletProviderType.XellarKit)) {
+      console.log("CustomConnectWalletButton: Wallet connected via EVM kit, attempting SIWE login...");
+      loginWithSiwe();
     }
-  }, [shouldOpenRainbowModal, activeProviderType, openRainbowModal]);
-
+  }, [isEvmConnected, evmAddress, isAuthenticated, isAuthLoading, loginWithSiwe, activeProviderType]);
 
   const handleConnectRainbowKit = () => {
     setActiveProviderType(WalletProviderType.RainbowKit);
-    // Instead of calling openRainbowModal immediately, set a state
-    // that an effect will pick up once RainbowKitProvider is hopefully rendered.
-    setShouldOpenRainbowModal(true);
+    setIsAttemptingRainbowConnect(true);
   };
+
+  useEffect(() => {
+    // This effect runs when activeProviderType or openRainbowModalFromHook changes,
+    // or when isAttemptingRainbowConnect becomes true.
+    if (
+      isAttemptingRainbowConnect &&
+      activeProviderType === WalletProviderType.RainbowKit &&
+      openRainbowModalFromHook && // Ensure the function is available
+      !connectModalOpen // Ensure modal is not already open
+    ) {
+      console.log("Effect: Opening RainbowKit modal...");
+      openRainbowModalFromHook();
+      setIsAttemptingRainbowConnect(false); // Reset the attempt flag
+    }
+  }, [
+    isAttemptingRainbowConnect,
+    activeProviderType,
+    openRainbowModalFromHook,
+    connectModalOpen, // Add connectModalOpen to dependency array
+  ]);
 
   const handleConnectXellarKit = () => {
     setActiveProviderType(WalletProviderType.XellarKit);
     console.warn("Xellar Kit connection logic not yet implemented.");
-    // Similar effect-based approach for Xellar if it has an async modal opening
+    toast.error("Xellar Kit connection is not yet implemented.");
   };
 
   const handleConnectMeshJS = async (walletName: string) => {
@@ -89,28 +103,56 @@ const CustomConnectWalletButton: React.FC = () => {
     setActiveProviderType(WalletProviderType.None);
   };
 
-  // ... (rest of the JSX rendering logic remains the same as your last provided version) ...
-  if (isEvmConnected && evmAddress && (activeProviderType === WalletProviderType.RainbowKit || activeProviderType === WalletProviderType.XellarKit) ) {
+  // Display authenticated user info if available
+  if (isAuthenticated && authenticatedUser && evmAddress === authenticatedUser.wallet_address) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="flex items-center">
-            {shortenAddress(evmAddress)} ({evmConnector?.name || activeProviderType})
+          <Button variant="outline" className="flex items-center border-green-500">
+            <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+            {shortenAddress(authenticatedUser.wallet_address)}
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Connected ({activeProviderType})</DropdownMenuLabel>
+          <DropdownMenuLabel>Authenticated ({authenticatedUser.role})</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
-            Disconnect
+            Log Out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
   }
 
+  // If EVM wallet is connected but not yet authenticated with backend (SIWE pending or failed)
+  if (isEvmConnected && evmAddress) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="flex items-center border-orange-500">
+            <ShieldAlert className="mr-2 h-4 w-4 text-orange-500" />
+             {shortenAddress(evmAddress)} (Verify)
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Wallet Connected</DropdownMenuLabel>
+          <DropdownMenuItem onClick={loginWithSiwe} className="cursor-pointer">
+            Sign In to Re.Grant
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer">
+            <LogOut className="mr-2 h-4 w-4" />
+            Disconnect Wallet
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Cardano connected state (separate from SIWE for now)
   if (isCardanoConnected && cardanoWalletName && activeProviderType === WalletProviderType.MeshJS) {
     return (
       <DropdownMenu>
@@ -132,21 +174,23 @@ const CustomConnectWalletButton: React.FC = () => {
     );
   }
 
+  // Default: "Connect Wallet" button
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button>
-          <WalletIcon className="mr-2 h-4 w-4" /> Connect Wallet
+      {/* ... (same DropdownMenu for connection options as before) ... */}
+       <DropdownMenuTrigger asChild>
+        <Button disabled={isAuthLoading}>
+          {isAuthLoading ? 'Authenticating...' : <><WalletIcon className="mr-2 h-4 w-4" /> Connect Wallet</>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>Connect Lisk (EVM)</DropdownMenuLabel>
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={handleConnectRainbowKit} className="cursor-pointer">
+          <DropdownMenuItem onClick={handleConnectRainbowKit} className="cursor-pointer" disabled={isAuthLoading}>
             <WalletIcon className="mr-2 h-4 w-4 opacity-70" />
             Browser & Mobile Wallets
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleConnectXellarKit} disabled className="cursor-not-allowed">
+          <DropdownMenuItem onClick={handleConnectXellarKit} disabled className="cursor-not-allowed" title="Xellar Kit Integration Pending">
             <WalletIcon className="mr-2 h-4 w-4 opacity-70" />
             Social Login (Xellar)
             <span className="ml-auto text-xs text-muted-foreground">Soon</span>
@@ -157,8 +201,8 @@ const CustomConnectWalletButton: React.FC = () => {
         <DropdownMenuGroup>
           {meshAvailableWallets && meshAvailableWallets.length > 0 ? (
             meshAvailableWallets.map((wallet: IMeshWallet) => (
-              <DropdownMenuItem key={wallet.name} onClick={() => handleConnectMeshJS(wallet.name)} className="cursor-pointer">
-                <Image src={wallet.icon} alt={`${wallet.name} icon`} className="mr-2 h-4 w-4" width={16} height={16} />
+              <DropdownMenuItem key={wallet.name} onClick={() => handleConnectMeshJS(wallet.name)} className="cursor-pointer" disabled={isAuthLoading}>
+                <Image src={wallet.icon} alt={`${wallet.name} icon`} width={16} height={16} className="mr-2 h-4 w-4" />
                 {wallet.name}
               </DropdownMenuItem>
             ))

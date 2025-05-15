@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Any
 
 from app import crud, models, schemas
-from app.api import deps # For dependencies like get_current_active_user (to be created)
+from app.api import deps # For dependencies like get_current_active_user
 from app.db.session import get_db
 
 router = APIRouter()
@@ -96,3 +96,12 @@ def update_user_endpoint(
     #     raise HTTPException(status_code=403, detail="Not enough permissions")
     user = crud.user.update_user(db=db, db_user=db_user, user_in=user_in)
     return user
+
+@router.get("/me", response_model=schemas.User)
+async def read_users_me(
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get current user.
+    """
+    return current_user

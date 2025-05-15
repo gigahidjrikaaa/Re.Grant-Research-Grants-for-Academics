@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"] # Add your frontend URL
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        ] # Add your frontend URL
 
     # For Sign-In with Ethereum (SIWE)
     SIWE_NONCE_EXPIRY_SECONDS: int = 5 * 60 # 5 minutes
@@ -28,6 +31,7 @@ def get_settings() -> Settings:
     print("Loading settings...")
     settings = Settings()
     print(f"Loaded DATABASE_URL: {settings.DATABASE_URL}") # Check if it's from .env or default
+    print(f"Loaded CORS_ORIGINS: {settings.CORS_ORIGINS}")
     return settings
 
 settings = get_settings()
