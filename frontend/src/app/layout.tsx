@@ -6,6 +6,8 @@ import '@rainbow-me/rainbowkit/styles.css'; // RainbowKit styles
 import { Providers } from "./providers";
 import Header from "@/components/layout/Header";
 import { Toaster as SonnerToaster } from "sonner"; // Sonner for notifications
+import { Suspense } from "react";
+import { NavigationEvents } from "@/components/layout/NavigationEvents";
 
 // Setup the Inter font
 const inter = Inter({
@@ -27,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className={`font-sans bg-gray-50 text-gray-900 antialiased`}> {/* Use font-sans which Tailwind maps to Inter; Set base colors */}
+      <body className={`font-sans bg-gray-50 text-gray-900 antialiased`}>
         <Providers>
           <div className="flex flex-col min-h-screen min-w-screen w-full bg-brand-background text-text-primary">
             <Header />
@@ -49,6 +51,9 @@ export default function RootLayout({
                   }
                 }}
               />
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                <NavigationEvents />
+              </Suspense>
             </main>
             {/* <Footer /> Placeholder for Footer */}
           </div>
