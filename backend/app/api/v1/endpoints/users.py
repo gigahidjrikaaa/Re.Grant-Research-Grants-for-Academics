@@ -104,4 +104,17 @@ async def read_users_me(
     """
     Get current user.
     """
+    print(f"[GET /users/me] Current user object from DB: {vars(current_user)}")
+    # Try to manually convert to dict to see what Pydantic gets, for debugging
+    try:
+        # For Pydantic v2:
+        user_data_for_response = schemas.User.model_validate(current_user)
+        print(f"[GET /users/me] User data after Pydantic model_validate: {user_data_for_response.model_dump_json(indent=2)}")
+        # For Pydantic v1:
+        # user_data_for_response = schemas.User.from_orm(current_user)
+        # print(f"[GET /users/me] User data after Pydantic from_orm: {user_data_for_response.json(indent=2)}")
+    except Exception as e:
+        print(f"[GET /users/me] Pydantic validation/conversion EXCEPTION for /me: {type(e).__name__} - {e}")
+        # If an exception happens here, FastAPI will likely return 422 before this print is fully seen by you,
+        # but the server log might capture it.
     return current_user

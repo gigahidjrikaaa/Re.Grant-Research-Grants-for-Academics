@@ -4,7 +4,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useAccount, useSignMessage, useDisconnect as useWagmiDisconnect } from 'wagmi';
 import { SiweMessage } from 'siwe'; // For constructing the SIWE message
-// import { useRouter } from 'next/navigation'; // Or next/router if using Pages Router
+import { useRouter } from 'next/navigation'; // Or next/router if using Pages Router
+import { toast } from 'sonner'; // For notifications
 
 // Define what your backend's user object looks like after authentication
 // This should align with your FastAPI schemas.User
@@ -57,10 +58,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start true to load initial state
 
   const { address, chain, isConnected } = useAccount();
-  // const { chain: currentChain } = useNetwork(); // To get chainId for SIWE message - chain is available from useAccount
+  // chain is available from useAccount, no need for useNetwork
   const { signMessageAsync } = useSignMessage();
   const { disconnect: wagmiDisconnect } = useWagmiDisconnect();
-//   const router = useRouter();
+  const router = useRouter();
 
   const fetchCurrentUser = useCallback(async (currentToken?: string) => {
     const activeToken = currentToken || token;
@@ -115,7 +116,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loginWithSiwe = async () => {
     if (!isConnected || !address || !chain) {
       console.error('Wallet not connected, address or chainId missing for SIWE.');
-      alert('Please connect your wallet first.');
+      toast.error('Wallet not connected. Please connect your wallet first.');
+      setIsLoading(false); // Ensure loading state is reset
       return;
     }
     setIsLoading(true);
@@ -123,7 +125,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // 1. Get nonce from backend
       const nonceResponse = await fetch(`${API_BASE_URL}/auth/siwe/nonce?wallet_address=${address}`);
       if (!nonceResponse.ok) {
-        throw new Error(`Failed to fetch nonce: ${nonceResponse.statusText}`);
+        const errorText = await nonceResponse.text();
+        console.error("SIWE: Nonce response error text:", errorText);
+        throw new Error(`Failed to fetch nonce: ${nonceResponse.status} ${nonceResponse.statusText}. Body: ${errorText}`);
       }
       const { nonce } = await nonceResponse.json();
 
@@ -156,24 +160,58 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (!loginResponse.ok) {
-        const errorData = await loginResponse.json();
-        throw new Error(`SIWE login failed: ${errorData.detail || loginResponse.statusText}`);
+        let errorDetail = `SIWE login failed: ${loginResponse.status} ${loginResponse.statusText}`;
+        try {
+          const errorData = await loginResponse.json();
+          console.error("SIWE: Login response error data (JSON):", errorData);
+          errorDetail += ` - ${errorData.detail || JSON.stringify(errorData)}`;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
+          const textError = await loginResponse.text();
+          console.error("SIWE: Login response error data (text):", textError);
+          errorDetail += ` - Body: ${textError}`;
+        }
+        throw new Error(errorDetail);
       }
 
-      const { access_token }: { access_token: string } = await loginResponse.json();
-      setToken(access_token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('authToken', access_token);
-      }
-      await fetchCurrentUser(access_token); // Fetch user data after successful login
+        const { access_token }: { access_token: string } = await loginResponse.json();
+        setToken(access_token);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('authToken', access_token);
+        }
+        await fetchCurrentUser(access_token); // Fetch user data after successful login
+        toast.success("Successfully signed in!");
 
     } catch (error) {
-      console.error('SIWE login process error:', error);
-      // alert(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
-      setUser(null);
-      setToken(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
+        console.error('SIWE login process error:', error);
+        toast.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Check for Viem/Wagmi specific UserRejectedRequestError
+      // Viem errors often have a 'name' property.
+      if (
+        typeof error === 'object' && 
+        error !== null && 
+        (('name' in error && error.name === 'UserRejectedRequestError') || 
+         ('message' in error && typeof error.message === 'string' && error.message.includes('User rejected the request')))
+      ) {
+        console.log("SIWE login cancelled by user.");
+        toast.info("Sign-in request was cancelled.");
+        // No need to clear token/user here as they wouldn't have been set yet in this flow
+      } else if (error instanceof Error) { // Handle other Error instances
+        console.error('SIWE login process error (general):', error.message);
+        toast.error(`Login failed: ${error.message}`);
+        setUser(null); // Clear user/token on other errors
+        setToken(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('authToken');
+        }
+      } else { // Handle non-Error exceptions if any
+        console.error('SIWE login process error (unknown type):', error);
+        toast.error("An unexpected error occurred during login.");
+        setUser(null);
+        setToken(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('authToken');
+        }
       }
     } finally {
       setIsLoading(false);
@@ -189,8 +227,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     wagmiDisconnect(); // Disconnect wallet via Wagmi
     // Optionally, call a backend /logout endpoint if it invalidates server-side sessions/tokens
-    // router.push('/'); // Redirect to home or login page
-  }, [wagmiDisconnect /*, router */]);
+    router.push('/'); // Redirect to home or login page
+  }, [wagmiDisconnect , router]);
 
   const isAuthenticated = !!token && !!user;
 
