@@ -5,6 +5,7 @@ import "./globals.css"; // Includes Tailwind base styles
 import '@rainbow-me/rainbowkit/styles.css'; // RainbowKit styles
 import { Providers } from "./providers";
 import Header from "@/components/layout/Header";
+import { Toaster as SonnerToaster } from "sonner"; // Sonner for notifications
 
 // Setup the Inter font
 const inter = Inter({
@@ -33,6 +34,21 @@ export default function RootLayout({
             <main className="flex-grow min-w-screen w-full">
               {/* Main content area */}
               {children}
+              <SonnerToaster
+                position="top-center"
+                richColors
+                closeButton
+                toastOptions={{
+                  style: {
+                    backgroundColor: 'hsl(var(--primary))',
+                    color: 'hsl(var(--primary-foreground))',
+                  },
+                  classNames: {
+                    success: 'bg-success text-success-foreground',
+                    error: 'bg-error text-error-foreground',
+                  }
+                }}
+              />
             </main>
             {/* <Footer /> Placeholder for Footer */}
           </div>
