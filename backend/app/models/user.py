@@ -9,29 +9,34 @@ class UserRole(str, enum.Enum):
     STUDENT = "student"
     RESEARCHER = "researcher"
     ADMIN = "admin"
+    INSTITUTION = "institution" # Added
 
 class User(Base):
-    __tablename__ = "users" # Explicitly defining, though Base can auto-generate
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    wallet_address = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=True) # Email might be optional initially
+    wallet_address = Column(String(42), unique=True, index=True, nullable=False) # Wallet address is required
+    email = Column(String, unique=True, index=True, nullable=True) # Email is optional
     full_name = Column(String, index=True, nullable=True)
     role = Column(DBEnum(UserRole), default=UserRole.STUDENT, nullable=False)
     
-    # Hashed password, if you decide to implement traditional password auth alongside/fallback for wallet
-    # hashed_password = Column(String, nullable=True)
+    hashed_password = Column(String, nullable=True) # If using password authentication
+    # wallet_address is the primary identifier, but email can be used for notifications
     
     is_active = Column(Boolean(), default=True)
-    is_superuser = Column(Boolean(), default=False) # For admin roles
+    is_superuser = Column(Boolean(), default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # Relationships (add later as needed)
-    # grants_proposed = relationship("Grant", back_populates="proposer") # If user proposes grants
-    # profile = relationship("Profile", back_populates="user", uselist=False) # One-to-one with Profile
-    project_applications = relationship("ProjectApplication", back_populates="applicant", cascade="all, delete-orphan")
+    # Relationships are defined in other files and will link back here
+    # e.g., Profile.user = relationship("User", back_populates="profile")
+    # User.profile will be set in profile.py or models/__init__.py
+    # User.grants_proposed will be set in grant.py
+    # User.grant_applications will be set in grant.py
+    # User.projects_created will be set in project.py
+    # User.project_participations will be set in project.py
+    # User.project_applications is for applications made by the user to projects
 
     def __repr__(self):
-        return f"<User(id={self.id}, wallet_address='{self.wallet_address}', role='{self.role.value}')>"
+        return f"<User(id={self.id}, email='{self.email}', role='{self.role.value}')>"

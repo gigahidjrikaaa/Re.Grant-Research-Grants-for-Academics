@@ -492,7 +492,7 @@ def seed_dummy_grant_applications_endpoint(
     ).order_by(func.random()).limit(request_body.num_applicants).all()
 
     if not target_grants or not applicant_users:
-        return {"message": "Not enough grants or potential applicants found.", "applications_created": 0}
+        return {"message": "Not enough grants or potential applicants found to create applications.", "applications_created": 0}
 
     applications = seeding.create_dummy_grant_applications(db, grants=target_grants, applicant_users=applicant_users, apps_per_grant_avg=request_body.apps_per_target_avg)
     return {"message": f"Successfully created {len(applications)} grant applications.", "applications_created": len(applications)}
@@ -516,11 +516,10 @@ def seed_dummy_project_applications_endpoint(
     ).order_by(func.random()).limit(request_body.num_applicants).all()
 
     if not target_projects or not applicant_users:
-        return {"message": "Not enough projects or potential applicants found.", "applications_created": 0}
+        return {"message": "Not enough projects or potential applicants found to create applications.", "applications_created": 0}
 
     applications = seeding.create_dummy_project_applications(db, projects=target_projects, applicant_users=applicant_users, apps_per_project_avg=request_body.apps_per_target_avg)
     return {"message": f"Successfully created {len(applications)} project applications.", "applications_created": len(applications)}
-
 
 @router.post("/seed/all-sample-data", summary="Populate All Major Tables with Sample Data", status_code=201, response_model=Dict[str, Any])
 def seed_all_sample_data_endpoint(

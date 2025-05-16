@@ -1,17 +1,16 @@
 from .user import User, UserRole
 
-from .profile import Profile
-from .profile import Experience # If you want to access Experience directly via app.models.Experience
-from .profile import Education
-from .profile import Publication
+from .profile import Profile, Experience, Education, Publication
 
-from .grant import Grant, GrantStatus, GrantMilestone, GrantApplication
-from .project import Project, ProjectStatus, ProjectMember, ProjectApplication 
+from .grant import Grant, GrantStatus, GrantType, GrantMilestone, GrantApplication, GrantApplicationStatus
+from .project import Project, ProjectStatus, ProjectCategory, ProjectMember, ProjectApplication, ApplicationStatus as ProjectApplicationStatus
 
 # You can define __all__ if you want to control `from app.models import *` behavior
 __all__ = [
     "User", "UserRole",
     "Profile", "Experience", "Education", "Publication",
-    "Grant", "GrantStatus", "GrantMilestone", "GrantApplication",
-    "Project", "ProjectStatus", "ProjectMember", "ProjectApplication",
+    "Grant", "GrantStatus", "GrantType", "GrantMilestone", "GrantApplication", "GrantApplicationStatus",
+    "Project", "ProjectStatus", "ProjectCategory", "ProjectMember", 
+    "ProjectApplication", # This is Project's application model
+    "ProjectApplicationStatus", # This is Project's application status enum
 ]
