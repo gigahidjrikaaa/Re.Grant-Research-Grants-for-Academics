@@ -13,5 +13,5 @@ __all__ = [
     "User", "UserRole",
     "Profile", "Experience", "Education", "Publication",
     "Grant", "GrantStatus", "GrantMilestone", "GrantApplication",
-    "Project", "ProjectStatus", "ProjectMember",
+    "Project", "ProjectStatus", "ProjectMember", "ProjectApplication",
 ]

@@ -89,7 +89,7 @@ export default function DataSeedingPage() {
     apiCall: (payload: T, token: string | null) => Promise<SeedResponse>,
     payload: T
   ) => {
-    if (!token || user?.role !== 'admin') {
+    if (!token || !user?.is_superuser) {
       toast.error('Unauthorized: Admin access required.');
       return;
     }

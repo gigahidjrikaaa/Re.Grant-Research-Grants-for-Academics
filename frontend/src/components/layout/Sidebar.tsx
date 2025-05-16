@@ -118,7 +118,23 @@ export function Sidebar({ isAdmin }: SidebarProps) { // Use isAdmin directly
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
+    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex overflow-y-auto scrollbar-thin">
+      <style jsx>{`
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 2px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: hsl(var(--muted-foreground) / 0.3);
+        border-radius: 20px;
+      }
+      .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+      }
+      `}</style>
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <Link
           href="/"
