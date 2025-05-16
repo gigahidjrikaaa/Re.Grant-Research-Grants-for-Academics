@@ -31,6 +31,7 @@ class User(Base):
     # Relationships (add later as needed)
     # grants_proposed = relationship("Grant", back_populates="proposer") # If user proposes grants
     # profile = relationship("Profile", back_populates="user", uselist=False) # One-to-one with Profile
+    project_applications = relationship("ProjectApplication", back_populates="applicant", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, wallet_address='{self.wallet_address}', role='{self.role.value}')>"

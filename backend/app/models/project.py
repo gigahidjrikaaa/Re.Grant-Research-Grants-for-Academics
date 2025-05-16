@@ -1,3 +1,4 @@
+import datetime
 import enum
 from sqlalchemy import ARRAY, Column, Integer, String, Text, Boolean, DateTime, Enum as DBEnum, ForeignKey, JSON, Date
 from sqlalchemy.orm import relationship
@@ -5,6 +6,29 @@ from sqlalchemy.sql import func
 
 from app.db.base_class import Base
 # from .user import User # For relationships
+
+class ApplicationStatus(str, enum.Enum):
+    PENDING = "pending" # Application submitted, waiting for review
+    ACCEPTED = "accepted" # Application accepted, user can join the project
+    REJECTED = "rejected" # Application rejected
+    WITHDRAWN = "withdrawn" # User withdrew their application
+    IN_PROGRESS = "in_progress" # Application is being processed or reviewed
+    CANCELLED = "cancelled" # Application was cancelled by the system or admin
+
+class ProjectApplication(Base):
+    __tablename__ = "project_applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True) # The applicant
+    
+    cover_letter = Column(Text, nullable=True)
+    status = Column(DBEnum(ApplicationStatus), default=ApplicationStatus.PENDING, nullable=False)
+    application_date = Column(Date, default=datetime.date.today, nullable=False) # Or DateTime
+
+    # Relationships
+    project = relationship("Project", back_populates="applications")
+    applicant = relationship("User", back_populates="project_applications")
 
 class ProjectStatus(str, enum.Enum):
     OPEN = "open" # Actively seeking collaborators/applicants
@@ -32,6 +56,7 @@ class Project(Base):
     
     # Can be linked to a Grant if this project is part of a funded grant
     grant_id = Column(Integer, ForeignKey("grants.id"), nullable=True, index=True)
+    applications = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
