@@ -409,7 +409,7 @@ def seed_dummy_profiles_endpoint(
     if not target_users:
         return {"message": "No suitable users found or provided to create profiles for.", "profiles_created": 0}
 
-    profiles = seeding.create_dummy_profiles(db, users=target_users)
+    profiles = seeding.create_dummy_profiles_with_details(db, users=target_users)
     return {"message": f"Successfully created/processed {len(profiles)} profiles with details.", "profiles_created": len(profiles)}
 
 
@@ -531,7 +531,7 @@ def seed_all_sample_data_endpoint(
     """
     Populates all major tables with a configurable amount of interconnected sample data.
     """
-    results = seeding.seed_all_basic_data(
+    results = seeding.seed_all_sample_data(
         db,
         num_users=request_body.num_users,
         num_grants=request_body.num_grants,
