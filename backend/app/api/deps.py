@@ -1,61 +1,93 @@
-from typing import Generator, Optional
+from typing import TYPE_CHECKING, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from pydantic import ValidationError
+from pydantic import ValidationError # Keep if you plan to use TokenPayload schema
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
 from app.core.config import settings
 from app.db.session import get_db
-from app.core.security import ALGORITHM # SECRET_KEY is already in settings
+# ALGORITHM is used via settings.ALGORITHM
 
-# Define the OAuth2 scheme. tokenUrl points to your login endpoint
-# For SIWE, the "token" is the JWT you issue *after* successful SIWE verification.
-# So, clients won't directly post to this tokenUrl with username/password.
-# This scheme is primarily for FastAPI to understand how to extract the token from Authorization header.
+import logging
+logger = logging.getLogger(__name__)
+# Ensure basicConfig is called once, e.g., in main.py or a central logging setup
+# logging.basicConfig(level=logging.INFO) # Can be removed if configured globally
+
+if TYPE_CHECKING:
+    from app.models.user import User as UserModel
+    # from app.schemas.token import TokenPayload # Uncomment if you use this
+
+# This is mainly for OpenAPI documentation to know where the token can be obtained
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/auth/siwe/login" # Or a dedicated /token endpoint if you make one
+    tokenUrl=f"{settings.API_V1_STR}/auth/siwe/login"
 )
 
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
-) -> models.User:
+) -> 'UserModel':
+    # Import crud locally within the function if there's any remote possibility of
+    # import cycles during initial app load, or if models are extensive.
+    # For a well-structured app, top-level imports in deps.py are often fine.
+    from app import crud
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Could not validate credentials", # Keep detail somewhat generic for security
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        wallet_address: Optional[str] = payload.get("sub")
-        if wallet_address is None:
+        wallet_address_from_token: Optional[str] = payload.get("sub")
+        if not wallet_address_from_token:
+            logger.warning("JWT 'sub' claim (wallet_address) missing from token payload.")
             raise credentials_exception
-        # token_data = schemas.TokenPayload(sub=wallet_address) # Pydantic validation if needed
-    except (JWTError, ValidationError) as e:
-        print(f"JWT Decode/Validation Error: {e}")
+
+        # Optional: Validate payload further with a Pydantic schema if desired
+        # try:
+        #     from app.schemas.token import TokenPayload
+        #     token_data = TokenPayload(sub=wallet_address_from_token)
+        # except ValidationError as e_val:
+        #     logger.warning(f"JWT payload structure invalid: {e_val}")
+        #     raise credentials_exception
+        # except ImportError: # TokenPayload schema not found
+        #     pass
+
+
+    except JWTError as e_jwt:
+        logger.warning(f"JWT decoding/validation error: {e_jwt}")
+        raise credentials_exception
+    except Exception as e_decode: # Catch any other unexpected error during decode
+        logger.error(f"Unexpected error processing token: {type(e_decode).__name__} - {e_decode}", exc_info=True)
+        raise credentials_exception # Or a 500 for truly unexpected server errors
+
+    user = crud.user.get_user_by_wallet_address(db, wallet_address=wallet_address_from_token)
+    
+    if user is None:
+        logger.warning(f"User not found in DB for wallet_address from token: {wallet_address_from_token}")
         raise credentials_exception
     
-    user = crud.user.get_user_by_wallet_address(db, wallet_address=wallet_address)
-    if user is None:
-        raise credentials_exception
+    # logger.info(f"User {user.wallet_address} authenticated via token.") # Optional info log
     return user
 
+
 def get_current_active_user(
-    current_user: models.User = Depends(get_current_user),
-) -> models.User:
+    current_user: 'UserModel' = Depends(get_current_user),
+) -> 'UserModel':
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        logger.warning(f"Authentication attempt by inactive user: {current_user.wallet_address}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
 
 def get_current_active_superuser(
-    current_user: models.User = Depends(get_current_active_user),
-) -> models.User:
-    if not current_user.is_superuser:
+    current_user: 'UserModel' = Depends(get_current_active_user),
+) -> 'UserModel':
+    if not hasattr(current_user, 'is_superuser') or not current_user.is_superuser:
+        logger.warning(f"Non-superuser attempt to access superuser route: User {current_user.wallet_address}")
         raise HTTPException(
-            status_code=403, detail="The user doesn't have enough privileges"
+            status_code=status.HTTP_403_FORBIDDEN, detail="The user doesn't have enough privileges"
         )
     return current_user

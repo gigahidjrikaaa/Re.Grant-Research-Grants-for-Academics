@@ -1,4 +1,4 @@
-from fastapi import FastAPI # type: ignore
+from fastapi import FastAPI, Depends, HTTPException, status # type: ignore
 from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
 from app.core.config import settings
@@ -6,10 +6,7 @@ from app.api.v1.api import api_router as api_v1_router
 from app.db.database import engine # If using SQLAlchemy and need to create tables on startup
 from app.db.base_class import Base # To create tables
 
-# Create all tables in the database (only for initial setup, use Alembic for migrations)
-# This is a simple way for hackathons but not ideal for production evolution.
-def init_db():
-    Base.metadata.create_all(bind=engine)
+from app.api import deps # For admin route protection
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -36,7 +33,6 @@ async def startup_event():
 
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
-app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
