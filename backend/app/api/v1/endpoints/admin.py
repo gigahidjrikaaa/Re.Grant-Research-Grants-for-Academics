@@ -15,14 +15,21 @@ router = APIRouter()
 # --- Helper Functions (can be moved to a utility module) ---
 
 def get_table_metadata(table_name: str):
-    """Gets metadata for a given table name."""
-    mapper = inspect(Base.metadata.tables.get(table_name))
-    if not mapper:
-        return None
+    # The calling function (get_table_schema) already ensures that 
+    # table_name is a valid key in Base.metadata.tables.
+    
+    # inspect(TableObject) returns the TableObject itself.
+    table_object = inspect(Base.metadata.tables.get(table_name))
+    
+    # The 'if not table_object:' check is removed as it caused the TypeError
+    # and is redundant here because table_object is guaranteed to be a Table instance.
+
+    # Directly use the table_object to get columns and primary keys.
+    # SQLAlchemy Table objects have .columns and .primary_key attributes.
     return {
         "name": table_name,
-        "columns": [{"name": col.name, "type": str(col.type)} for col in mapper.columns],
-        "primary_keys": [pk.name for pk in mapper.primary_key]
+        "columns": [{"name": col.name, "type": str(col.type)} for col in table_object.columns],
+        "primary_keys": [pk.name for pk in table_object.primary_key]
     }
 
 # --- Admin Endpoints ---
