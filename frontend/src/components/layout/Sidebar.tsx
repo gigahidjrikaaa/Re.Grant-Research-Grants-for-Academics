@@ -1,63 +1,137 @@
-// src/components/layout/Sidebar.tsx
+// frontend/src/components/layout/Sidebar.tsx
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import {
-    LayoutGrid, // Example Dashboard Icon
-    FileText,   // Grants List Icon
-    PlusSquare, // Apply Icon
-    Briefcase,  // Project Board Icon
-    User,       // Profile Icon
-    Users,      // Talent Pool Icon
-    Settings    // Settings Icon
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Assuming you have Tooltip from Shadcn
+import {
+  FileText,
+  Users,
+  Briefcase,
+  Settings,
+  UserCircle,
+  PlusSquare,
+  LayoutGrid, // For Dashboard
+  ShieldCheck, // For Admin section
+  Database, // For Data Editor (Admin)
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth to check for admin status
 
-// Define navigation items with icons
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid }, // Example
-  { href: '/grants', label: 'Browse Grants', icon: FileText },
-  { href: '/apply', label: 'Apply for Grant', icon: PlusSquare },
-  { href: '/project-board', label: 'Project Board', icon: Briefcase }, // Future
-  { href: '/profile', label: 'My Profile', icon: User }, // Future
-  { href: '/talent-pool', label: 'Talent Pool', icon: Users }, // Future
-  { href: '/settings', label: 'Settings', icon: Settings }, // Example
-];
+// Logo component can be kept here or imported if it's more complex/reused
+const Logo = () => (
+  <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7">
+    <defs>
+      <linearGradient id="logoGradientSidebar" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="hsl(var(--primary))" /> {/* Use themed color variable */}
+        <stop offset="100%" stopColor="hsl(var(--primary-focus))" /> {/* Example: primary-focus or another accent */}
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="url(#logoGradientSidebar)" />
+    <path d="M30,55 Q40,25 50,55 T70,55" fill="none" stroke="hsl(var(--primary-foreground))" strokeWidth="8" strokeLinecap="round" />
+    <path d="M35,40 Q50,70 65,40" fill="none" stroke="hsl(var(--primary-foreground))" strokeWidth="8" strokeLinecap="round" />
+  </svg>
+);
 
-export default function Sidebar() {
+
+interface NavItemProps {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  currentPathname: string;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, currentPathname }) => {
+  const isActive = currentPathname === href || (href !== "/" && currentPathname.startsWith(href));
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href={href}
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+              isActive && "bg-accent text-accent-foreground"
+            )}
+          >
+            <Icon className="h-5 w-5" />
+            <span className="sr-only">{label}</span>
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right">{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+interface SidebarProps {
+  isAdmin?: boolean; // Optional prop, but we'll use useAuth directly
+}
+
+export function Sidebar({ isAdmin }: SidebarProps) { // Use isAdmin directly
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth(); // Get user data from AuthContext
+
+  const isUserAdmin = isAdmin || (isAuthenticated && user?.is_superuser === true);
+
+  const navItems = [
+    { href: "/dashboard", icon: LayoutGrid, label: "Dashboard" },
+    { href: "/grants", icon: FileText, label: "Grants" },
+    { href: "/apply", icon: PlusSquare, label: "Apply for Grant" },
+    { href: "/talent-pool", icon: Users, label: "Talent Pool" },
+    { href: "/project-board", icon: Briefcase, label: "Project Board" },
+    { href: "/profile", icon: UserCircle, label: "My Profile" },
+  ];
+
+  const adminNavItems = [
+    { href: "/admin/data-editor", icon: Database, label: "Data Editor" },
+    // Add more admin-specific links here, e.g., user management, platform settings
+    // { href: "/admin/users", icon: Users, label: "Manage Users" },
+    // { href: "/admin/settings", icon: Settings, label: "Admin Settings" },
+  ];
 
   return (
-    <aside className="hidden md:flex md:flex-col md:w-64 border-r border-gray-200 bg-white pt-4"> {/* Use white bg */}
-      <nav className="flex flex-col space-y-1 px-4 mt-4"> {/* Reduced space-y */}
-        {navItems.map((item) => {
-          // More specific active check: exact match or starts with + slash
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150 ease-in-out group", // Added group for potential hover effects
-                isActive
-                  ? "bg-blue-50 text-primary-blue font-semibold shadow-sm" // Enhanced active state: lighter blue bg, primary text, bold, subtle shadow
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900" // Default state
-              )}
-            >
-              <item.icon className={cn(
-                  "h-5 w-5 flex-shrink-0", // Ensure icons don't shrink text
-                  isActive ? "text-primary-blue" : "text-gray-400 group-hover:text-gray-500" // Icon color changes
-              )} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
+      <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
+        <Link
+          href="/"
+          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base mb-2"
+        >
+          <Logo />
+          <span className="sr-only">Re.Grant</span>
+        </Link>
+        {navItems.map((item) => (
+          <NavItem key={item.href} {...item} currentPathname={pathname} />
+        ))}
+        {/* Conditionally render Admin section */}
+        {isUserAdmin && (
+          <>
+            <div className="my-2 h-px w-3/4 bg-border" /> {/* Separator */}
+            <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground md:h-8 md:w-8">
+                            <ShieldCheck className="h-5 w-5 text-primary-blue" />
+                            <span className="sr-only">Admin Section</span>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Admin Section</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            {adminNavItems.map((item) => (
+              <NavItem key={item.href} {...item} currentPathname={pathname} />
+            ))}
+          </>
+        )}
       </nav>
-      {/* Optional: Add a fixed section at the bottom */}
-      {/* <div className="mt-auto p-4 border-t">
-          <p className="text-xs text-gray-500">Re.grant v0.1</p>
-      </div> */}
+      <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+        <NavItem href="/settings" icon={Settings} label="Settings" currentPathname={pathname} />
+      </nav>
     </aside>
   );
 }

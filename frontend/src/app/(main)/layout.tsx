@@ -1,6 +1,6 @@
 // src/app/(main)/layout.tsx
 
-import Sidebar from "@/components/layout/Sidebar";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 export default function MainAppLayout({
   children,
