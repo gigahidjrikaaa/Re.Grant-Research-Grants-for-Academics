@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from .base import CRUDBase
 from app.models.project import Project, ProjectTeamMember, ProjectApplication
 from app.models.user import User # For type hints
-from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectTeamMemberCreate, ProjectApplicationCreate, ProjectApplicationUpdate
+from app.schemas.project import ProjectCreate, ProjectTeamMemberUpdate, ProjectUpdate, ProjectTeamMemberCreate, ProjectApplicationCreate, ProjectApplicationUpdate
 
 class CRUDProject(CRUDBase[Project, ProjectCreate, ProjectUpdate]):
     def get_multi_detailed(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Project]:

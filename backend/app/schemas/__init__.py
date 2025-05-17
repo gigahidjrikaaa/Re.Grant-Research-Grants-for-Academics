@@ -1,10 +1,19 @@
-from .user import User, UserCreate, UserUpdate, UserSchema, UserInDB, UserRole # Keep existing
+from .user import ( # Adjust based on the final names in your user.py
+    User, # This should be the one for API responses (with profile, without password)
+    UserCreate, 
+    UserUpdate,
+    UserPasswordUpdate, # if you added this
+    UserCreateWallet, # if you added this
+    UserRole,
+    UserList,
+    UserInDB # if you need to export the DB representation schema
+)
 from .token import Token, TokenPayload # Keep existing
-from .profile import ( # Keep existing profile schemas
-    ProfileSchema, ProfileCreate, ProfileUpdate, 
-    ExperienceSchema, ExperienceCreate, ExperienceUpdate,
-    EducationSchema, EducationCreate, EducationUpdate,
-    PublicationSchema, PublicationCreate, PublicationUpdate
+from .profile import (
+    ProfileSchema, ProfileCreate, ProfileUpdate,
+    Experience, ExperienceCreate, ExperienceUpdate,
+    Education, EducationCreate, EducationUpdate,
+    Publication, PublicationCreate, PublicationUpdate
 )
 
 # Add Grant schemas
@@ -21,12 +30,12 @@ from .project import (
 
 
 __all__ = [
-    "User", "UserCreate", "UserUpdate", "UserSchema", "UserInDB", "UserRole",
+    "User", "UserCreate", "UserUpdate", "UserPasswordUpdate", "UserCreateWallet", "UserRole", "UserList", "UserInDB",
     "Token", "TokenPayload",
     "ProfileSchema", "ProfileCreate", "ProfileUpdate",
-    "ExperienceSchema", "ExperienceCreate", "ExperienceUpdate",
-    "EducationSchema", "EducationCreate", "EducationUpdate",
-    "PublicationSchema", "PublicationCreate", "PublicationUpdate",
+    "Experience", "ExperienceCreate", "ExperienceUpdate",
+    "Education", "EducationCreate", "EducationUpdate",
+    "Publication", "PublicationCreate", "PublicationUpdate",
     
     "Grant", "GrantCreate", "GrantUpdate",
     "GrantApplication", "GrantApplicationCreate", "GrantApplicationUpdate",
