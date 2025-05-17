@@ -49,3 +49,10 @@ coverage.json
 *.lock
 .idea/
 .coverage
+
+# Foundry/Solidity
+contracts/regrant-contracts/cache/
+contracts/regrant-contracts/out/
+contracts/regrant-contracts/broadcast/
+contracts/regrant-contracts/deployments/
+contracts/regrant-contracts/lib/
