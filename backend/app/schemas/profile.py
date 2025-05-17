@@ -16,8 +16,8 @@ class ExperienceCreate(ExperienceBase):
     pass
 
 class ExperienceUpdate(ExperienceBase):
-    title: Optional[str] = None # All fields optional for update
-    company: Optional[str] = None
+    title: Optional[str] = None
+    institution: Optional[str] = None
     start_date: Optional[datetime.date] = None
     # Make other fields optional as needed for your update logic
 
@@ -31,11 +31,10 @@ class Experience(ExperienceBase): # For reading from DB
 
 # --- Education Schemas ---
 class EducationBase(BaseModel):
-    institution_name: str
+    institution: str # Was institution_name
     degree: str
-    field_of_study: Optional[str] = None
-    start_date: datetime.date
-    end_date: Optional[datetime.date] = None
+    major: Optional[str] = None
+    graduation_date: Optional[datetime.date] = None # Match model
     description: Optional[str] = None
 
 class EducationCreate(EducationBase):

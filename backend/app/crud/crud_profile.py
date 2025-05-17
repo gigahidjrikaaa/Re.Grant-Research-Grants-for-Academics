@@ -26,7 +26,7 @@ class CRUDPublication(CRUDBase[Publication, PublicationCreate, PublicationUpdate
 class CRUDProfile(CRUDBase[Profile, ProfileCreate, ProfileUpdate]):
     def get_by_user_id(self, db: Session, *, user_id: int) -> Optional[Profile]:
         return db.query(self.model).filter(self.model.user_id == user_id).first()
-
+    
     def get_by_user_id_detailed(self, db: Session, *, user_id: int) -> Optional[Profile]:
         """
         Gets a profile by user_id with all its related lists (experiences, education, publications)
@@ -37,10 +37,28 @@ class CRUDProfile(CRUDBase[Profile, ProfileCreate, ProfileUpdate]):
             .filter(self.model.user_id == user_id)
             .options(
                 selectinload(self.model.experiences),
-                selectinload(self.model.education_entries), # Match your model's relationship name
+                selectinload(self.model.educations), # MODIFIED: was education_entries, model uses 'educations'
                 selectinload(self.model.publications)
             )
             .first()
+        )
+
+    def get_visible_in_talent_pool(self, db: Session, skip: int = 0, limit: int = 100) -> List[Profile]:
+        """
+        Retrieves profiles that are marked as visible in the talent pool,
+        eagerly loading the associated user.
+        """
+        return (
+            db.query(self.model)
+            .filter(self.model.is_visible_in_talent_pool == True)
+            .options(
+                joinedload(self.model.user), # Eager load the user for name, role
+                # selectinload(self.model.skills), # Skills are direct columns, not relationships
+                # selectinload(self.model.research_interests) # Same for research_interests
+             ) # Add other selectinload for experiences, educations if needed by the response schema directly here
+            .offset(skip)
+            .limit(limit)
+            .all()
         )
 
     def create_for_user(self, db: Session, *, obj_in: ProfileCreate, user_id: int) -> Profile:
