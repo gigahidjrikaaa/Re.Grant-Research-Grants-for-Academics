@@ -178,8 +178,8 @@ def create_dummy_projects(db: Session, creator_users: List[models.User], grants:
         for member_user in members_to_add:
             if member_user.id != project.creator_id: # Creator is implicitly involved
                  # Check if already a member
-                if not db.query(models.ProjectMember).filter_by(project_id=project.id, user_id=member_user.id).first():
-                    db.add(models.ProjectMember(
+                if not db.query(models.ProjectTeamMember).filter_by(project_id=project.id, user_id=member_user.id).first():
+                    db.add(models.ProjectTeamMember(
                         project_id=project.id, user_id=member_user.id,
                         role_in_project=random.choice(["Developer", "Researcher", "Analyst", "Advisor"])
                     ))
@@ -217,7 +217,7 @@ def create_dummy_project_applications(db: Session, projects: List[models.Project
             if db.query(models.ProjectApplication).filter_by(project_id=project_item.id, user_id=applicant.id).first():
                 continue
             # Ensure applicant is not already a member of this project
-            if db.query(models.ProjectMember).filter_by(project_id=project_item.id, user_id=applicant.id).first():
+            if db.query(models.ProjectTeamMember).filter_by(project_id=project_item.id, user_id=applicant.id).first():
                 continue
 
             app_data = {

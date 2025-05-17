@@ -35,7 +35,7 @@ const GrantCard: React.FC<{ grant: Grant }> = ({ grant }) => {
       <CardContent className="flex-grow space-y-2 text-sm">
         <div className="flex items-center">
           <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-          <span>{grant.currency} {Number(grant.amount_awarded).toLocaleString()}</span>
+          <span>{grant.currency} {Number(grant.total_funding_requested).toLocaleString()} IDRX</span>
         </div>
         {grant.application_deadline && (
           <div className="flex items-center">
@@ -43,10 +43,10 @@ const GrantCard: React.FC<{ grant: Grant }> = ({ grant }) => {
             <span>Deadline: {format(new Date(grant.application_deadline), "PPP")}</span>
           </div>
         )}
-        {grant.funder && (
+        {grant.proposer && (
             <div className="flex items-center">
                 <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>Funder: {grant.funder.full_name || 'N/A'}</span>
+                <span>Funder: {grant.proposer.full_name || 'N/A'}</span>
             </div>
         )}
       </CardContent>

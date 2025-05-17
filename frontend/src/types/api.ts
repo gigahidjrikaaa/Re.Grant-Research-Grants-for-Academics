@@ -51,9 +51,9 @@ export interface Grant {
   id: number;
   title: string;
   description: string;
-  funder_id: number;
-  funder?: User; // Nested funder information, if backend provides it
-  amount_awarded: number | string; // Backend uses Numeric, frontend might receive as string or number
+  proposer_id: number;
+  proposer?: User; // Nested funder information, if backend provides it
+  total_funding_requested: number | string; // Backend uses Numeric, frontend might receive as string or number
   currency: string;
   application_deadline: string; // ISO date string
   application_start_date?: string | null; // ISO date string

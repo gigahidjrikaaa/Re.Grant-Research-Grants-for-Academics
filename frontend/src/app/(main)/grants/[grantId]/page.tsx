@@ -49,7 +49,7 @@ export default function GrantDetailPage() {
   if (error) return <div className="text-center py-10 text-red-600">Error: {error} <Button onClick={() => router.back()} variant="link">Go back</Button></div>;
   if (!grant) return <div className="text-center py-10">Grant not found. <Button onClick={() => router.back()} variant="link">Go back</Button></div>;
 
-  const funderName = grant.funder?.full_name || 'N/A';
+  const funderName = grant.proposer?.full_name || 'N/A';
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
@@ -81,7 +81,7 @@ export default function GrantDetailPage() {
               <DollarSign className="h-5 w-5 mr-3 mt-1 text-primary flex-shrink-0" />
               <div>
                 <p className="font-semibold text-muted-foreground">Amount Awarded</p>
-                <p className="text-lg font-bold">{grant.currency} {Number(grant.amount_awarded).toLocaleString()}</p>
+                <p className="text-lg font-bold">{grant.currency} {Number(grant.total_funding_requested).toLocaleString()}</p>
               </div>
             </div>
             {grant.application_start_date && (
