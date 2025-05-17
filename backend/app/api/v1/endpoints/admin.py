@@ -261,12 +261,14 @@ async def update_table_row(
 async def delete_table_row(
     table_name: str,
     row_id_str: str, # Assuming single integer PK
+    cascade: bool = Query(False, description="Whether to cascade delete dependent records."),
     db: Session = Depends(get_db),
     current_admin: models.User = Depends(deps.get_current_active_superuser)
 ):
     """
     Delete a row from the table by its primary key.
     Assumes a single primary key for simplicity.
+    - When cascade=True, will attempt to delete dependent records first
     """
     if table_name not in Base.metadata.tables:
         raise HTTPException(status_code=404, detail=f"Table '{table_name}' not found.")
@@ -290,6 +292,36 @@ async def delete_table_row(
         raise HTTPException(status_code=400, detail=f"Invalid ID format for primary key '{primary_key_column.name}'.")
 
     try:
+        try:
+            # If cascade is enabled and this is the users table, handle dependencies
+            if cascade:
+                if table_name == 'users':
+                    # Example: Delete dependent projects first
+                    projects_table = Base.metadata.tables['projects']
+                    delete_projects = projects_table.delete().where(projects_table.c.creator_id == row_id_typed)
+                    db.execute(delete_projects)
+                
+                if table_name == 'profiles':
+                    # Example: Delete dependent publications first
+                    publications_table = Base.metadata.tables['publications']
+                    delete_publications = publications_table.delete().where(publications_table.c.profile_id == row_id_typed)
+                    db.execute(delete_publications)
+
+                if table_name == 'grants':
+                    # Example: Delete dependent applications first
+                    applications_table = Base.metadata.tables['applications']
+                    delete_applications = applications_table.delete().where(applications_table.c.grant_id == row_id_typed)
+                    db.execute(delete_applications)
+                if table_name == 'projects':
+                    # Example: Delete dependent applications first
+                    applications_table = Base.metadata.tables['applications']
+                    delete_applications = applications_table.delete().where(applications_table.c.project_id == row_id_typed)
+                    db.execute(delete_applications)
+
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Error handling dependencies: {str(e)}")
+                
         stmt = table.delete().where(primary_key_column == row_id_typed)
         result = db.execute(stmt)
         
@@ -446,18 +478,20 @@ def seed_dummy_grants_endpoint(
     current_admin: models.User = Depends(deps.get_current_active_superuser),
     request_body: SeedGrantsRequest
 ):
+    # Define preferred roles for funders
+    specific_funder_roles = ["admin", "institution"]
+
+    # Attempt to find users with specific roles (ADMIN, INSTITUTION)
     funder_users = db.query(models.User).filter(
-        models.User.role.in_([
-            models.UserRole.ADMIN.value, 
-            models.UserRole.INSTITUTION.value
-        ])
-    ).order_by(func.random()).limit(10).all() # Added order_by random for variety
+        models.User.role.in_(specific_funder_roles)
+    ).order_by(func.random()).limit(10).all()
+
     if not funder_users: # If no admin/institution, use any user (less ideal)
         funder_users = db.query(models.User).order_by(func.random()).limit(5).all()
     if not funder_users: # If still no users at all
          raise HTTPException(status_code=400, detail="No users available in the database to act as funders.")
 
-    grants = seeding.create_dummy_grants(db, funder_users=funder_users, count=request_body.count)
+    grants = seeding.create_dummy_grants(db, proposer_users=funder_users, count=request_body.count)
     return {"message": f"Successfully created {len(grants)} dummy grants.", "grants_created": len(grants)}
 
 
@@ -472,8 +506,11 @@ def seed_dummy_projects_endpoint(
     creator_users = db.query(models.User).order_by(func.random()).limit(max(20, request_body.count * 2)).all()
     if not creator_users:
          raise HTTPException(status_code=400, detail="No users available in the database to create projects.")
+    
+    # Get some grants to link projects to
+    grants = db.query(models.Grant).order_by(func.random()).limit(5).all() or []
 
-    projects = seeding.create_dummy_projects(db, creator_users=creator_users, count=request_body.count)
+    projects = seeding.create_dummy_projects(db, creator_users=creator_users, grants=grants, count=request_body.count)
     return {"message": f"Successfully created {len(projects)} dummy projects with team members.", "projects_created": len(projects)}
 
 

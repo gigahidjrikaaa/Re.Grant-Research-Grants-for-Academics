@@ -131,7 +131,7 @@ def create_dummy_grants(db: Session, proposer_users: List[models.User], count: i
             "status": random.choice(list(models.GrantStatus)),
             "grant_type": random.choice(list(models.GrantType)),
             "total_funding_requested": random.uniform(10000, 250000),
-            "funding_currency": random.choice(["IDRX", "USD", "EUR"]),
+            "funding_currency": random.choice(["IDRX", "USD", "IDR"]),
             "application_start_date": fake.date_time_this_year(before_now=True, after_now=False),
             "application_deadline": fake.date_time_this_year(before_now=False, after_now=True),
             "start_date_expected": fake.date_object(),
@@ -244,8 +244,19 @@ def seed_all_sample_data(db: Session,
     users = create_dummy_users(db, count=num_users)
     if not users: return {"message": "Failed to create users, seeding aborted."}
     
-    researcher_student_users = [u for u in users if u.role in [models.UserRole.RESEARCHER, models.UserRole.STUDENT]]
-    potential_proposers_creators = [u for u in users if u.role in [models.UserRole.RESEARCHER, models.UserRole.INSTITUTION, models.UserRole.ADMIN]]
+    researcher_student_users = [
+        u for u in users if u.role.value in [
+            models.UserRole.RESEARCHER.value, 
+            models.UserRole.STUDENT.value
+        ]
+    ]
+    potential_proposers_creators = [
+        u for u in users if u.role.value in [
+            models.UserRole.RESEARCHER.value, 
+            models.UserRole.INSTITUTION.value, 
+            models.UserRole.ADMIN.value
+        ]
+    ]
     if not potential_proposers_creators: potential_proposers_creators = users # fallback
 
     profiles = create_dummy_profiles_with_details(db, users=users)
