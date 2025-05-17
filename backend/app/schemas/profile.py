@@ -80,14 +80,17 @@ class Publication(PublicationBase): # For reading from DB
 
 # --- Profile Schemas ---
 class ProfileBase(BaseModel):
+    avatar_url: Optional[HttpUrl] = None
+    current_role: Optional[str] = None
     headline: Optional[str] = None
-    bio: Optional[str] = None
-    skills: Optional[List[str]] = None # Consider List[str] and handle conversion if needed
+    about: Optional[str] = None # Maps to 'bio' in some of your comments
+    skills: Optional[List[str]] = None
     research_interests: Optional[List[str]] = None
-    website: Optional[HttpUrl] = None
+    website_url: Optional[HttpUrl] = None
     linkedin_url: Optional[HttpUrl] = None
     github_url: Optional[HttpUrl] = None
-    profile_picture_url: Optional[HttpUrl] = None
+    orcid_id: Optional[str] = None
+    is_visible_in_talent_pool: Optional[bool] = False
 
 class ProfileCreate(ProfileBase):
     # user_id will be set based on the current authenticated user typically

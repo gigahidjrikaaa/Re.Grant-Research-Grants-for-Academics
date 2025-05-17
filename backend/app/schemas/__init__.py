@@ -10,7 +10,7 @@ from .user import ( # Adjust based on the final names in your user.py
 )
 from .token import Token, TokenPayload, NonceResponse, SIWELoginData # Keep existing
 from .profile import (
-    ProfileSchema, ProfileCreate, ProfileUpdate,
+    ProfileSchema, ProfileCreate, ProfileUpdate, 
     Experience, ExperienceCreate, ExperienceUpdate,
     Education, EducationCreate, EducationUpdate,
     Publication, PublicationCreate, PublicationUpdate
@@ -33,6 +33,7 @@ from .project import (
 __all__ = [
     "User", "UserCreate", "UserUpdate", "UserPasswordUpdate", "UserCreateWallet", "UserRole", "UserList", "UserInDB",
     "Token", "TokenPayload",
+
     "ProfileSchema", "ProfileCreate", "ProfileUpdate",
     "Experience", "ExperienceCreate", "ExperienceUpdate",
     "Education", "EducationCreate", "EducationUpdate",

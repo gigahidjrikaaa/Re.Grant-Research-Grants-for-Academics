@@ -42,7 +42,7 @@ const CustomConnectWalletButton: React.FC = () => {
     getMeshAvailableWallets,
   } = useAppWalletProvider();
 
-  const { loginWithSiwe, user: authenticatedUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { loginWithSiwe, user: authenticatedUser, isAuthenticated, isLoading: isAuthLoading, logout: appLogout } = useAuth();
   const meshAvailableWallets = getMeshAvailableWallets();
 
   const { openConnectModal: openRainbowModalFromHook, connectModalOpen } = useConnectModal(); // Get connectModalOpen state
@@ -63,8 +63,6 @@ const CustomConnectWalletButton: React.FC = () => {
   };
 
   useEffect(() => {
-    // This effect runs when activeProviderType or openRainbowModalFromHook changes,
-    // or when isAttemptingRainbowConnect becomes true.
     if (
       isAttemptingRainbowConnect &&
       activeProviderType === WalletProviderType.RainbowKit &&
@@ -93,14 +91,15 @@ const CustomConnectWalletButton: React.FC = () => {
     await initiateMeshJSConnection(walletName);
   };
 
-  const handleDisconnect = () => {
+  const handleWalletDisconnect = () => {
     if (isEvmConnected && (activeProviderType === WalletProviderType.RainbowKit || activeProviderType === WalletProviderType.XellarKit)) {
-      disconnectEvm();
+      disconnectEvm(); // This will trigger wagmi's disconnect, AuthContext's logout also calls this.
     }
     if (isCardanoConnected && activeProviderType === WalletProviderType.MeshJS) {
       disconnectCardanoWallet();
     }
     setActiveProviderType(WalletProviderType.None);
+    // Note: If the user was authenticated, appLogout() should be called instead to clear session.
   };
 
   // Display authenticated user info if available
@@ -117,7 +116,8 @@ const CustomConnectWalletButton: React.FC = () => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Authenticated ({authenticatedUser.role})</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer">
+          {/* Use appLogout from AuthContext here */}
+          <DropdownMenuItem onClick={appLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             Log Out
           </DropdownMenuItem>
@@ -143,7 +143,8 @@ const CustomConnectWalletButton: React.FC = () => {
             Sign In to Re.Grant
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer">
+          {/* This button should just disconnect the wallet, not the app session */}
+          <DropdownMenuItem onClick={handleWalletDisconnect} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             Disconnect Wallet
           </DropdownMenuItem>
@@ -165,7 +166,7 @@ const CustomConnectWalletButton: React.FC = () => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Connected (Cardano)</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer">
+          <DropdownMenuItem onClick={handleWalletDisconnect} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             Disconnect
           </DropdownMenuItem>

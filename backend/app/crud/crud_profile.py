@@ -1,5 +1,6 @@
 # backend/app/crud/crud_profile.py
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
+from pydantic import HttpUrl
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.crud.base import CRUDBase
@@ -60,20 +61,40 @@ class CRUDProfile(CRUDBase[Profile, ProfileCreate, ProfileUpdate]):
             .limit(limit)
             .all()
         )
-
-    def create_for_user(self, db: Session, *, obj_in: ProfileCreate, user_id: int) -> Profile:
-        db_obj = self.model(**obj_in.model_dump(), user_id=user_id) # Pydantic v2
-        # db_obj = self.model(**obj_in.dict(), user_id=user_id) # Pydantic v1
+    
+    def create_with_user(self, db: Session, *, obj_in: ProfileCreate, user_id: int) -> Profile:
+        """
+        Create a new profile for a specific user.
+        """
+        # Create a dictionary from the Pydantic model, excluding unset fields if appropriate
+        # or all fields if your Profile model requires them or has defaults.
+        profile_data = obj_in.model_dump()
+        db_obj = Profile(**profile_data, user_id=user_id)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
-    def update_for_user(self, db: Session, *, user_id: int, obj_in: ProfileUpdate) -> Optional[Profile]:
+    def update_by_user_id(
+        self, 
+        db: Session, 
+        *, 
+        user_id: int, 
+        obj_in: Union[ProfileUpdate, Dict[str, Any]]
+    ) -> Optional[Profile]:
         db_obj = self.get_by_user_id(db, user_id=user_id)
         if db_obj:
-            return self.update(db, db_obj=db_obj, obj_in=obj_in)
-        return None
+            update_data = obj_in if isinstance(obj_in, dict) else obj_in.model_dump(exclude_unset=True)
+            for field, value in update_data.items():
+                # Convert HttpUrl to string before setting attribute
+                if isinstance(value, HttpUrl):
+                    setattr(db_obj, field, str(value))
+                else:
+                    setattr(db_obj, field, value)
+            db.add(db_obj)
+            db.commit()
+            db.refresh(db_obj)
+        return db_obj
 
     # Methods to add/update/remove experiences, education, publications for a profile
     # These would typically take a profile_id and the respective Create/Update schema
