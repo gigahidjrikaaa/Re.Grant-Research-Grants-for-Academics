@@ -64,7 +64,9 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
-// --- Admin Data Editor API Calls ---
+
+
+//? --- Admin Data Editor API Calls ---
 
 export const listManageableTables = (token: string | null): Promise<string[]> => {
   return request<string[]>('/admin-data/tables', 'GET', null, token);
@@ -112,4 +114,87 @@ export const deleteTableRow = (
   token: string | null
 ): Promise<null> => { // DELETE usually returns 204 No Content
   return request<null>(`/admin-data/tables/${tableName}/data/${rowId}`, 'DELETE', null, token);
+};
+
+
+export interface SeedResponse {
+  message: string;
+  details?: Record<string, unknown>; // For comprehensive responses like seedAll
+  users_created?: number;
+  profiles_created?: number;
+  publications_created?: number;
+  grants_created?: number;
+  projects_created?: number;
+  applications_created?: number; // Generic for grant/project apps
+  // Add other specific count fields if your backend returns them
+}
+
+export interface SeedUsersPayload {
+  count: number;
+}
+
+export interface SeedProfilesPayload {
+  user_ids?: number[];
+  num_recent_users: number;
+}
+
+export interface SeedPublicationsPayload {
+  profile_ids?: number[];
+  num_recent_profiles: number;
+  pubs_per_profile_avg: number;
+}
+
+export interface SeedCountPayload { // For Grants, Projects
+  count: number;
+}
+
+export interface SeedApplicationsPayload {
+  target_ids?: number[];
+  num_recent_targets: number;
+  apps_per_target_avg: number;
+  num_applicants: number;
+}
+
+export interface SeedAllPayload {
+  num_users: number;
+  num_grants: number;
+  num_projects: number;
+  pubs_per_profile_avg: number;
+  apps_per_grant_avg: number;
+  apps_per_project_avg: number;
+}
+
+
+// --- API Service Functions for Seeding ---
+
+export const seedDummyUsers = (payload: SeedUsersPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/users', 'POST', payload, token);
+};
+
+export const seedDummyProfilesWithDetails = (payload: SeedProfilesPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/profiles-with-details', 'POST', payload, token);
+};
+
+export const seedDummyPublications = (payload: SeedPublicationsPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/publications', 'POST', payload, token);
+};
+
+export const seedDummyGrants = (payload: SeedCountPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/grants', 'POST', payload, token);
+};
+
+export const seedDummyProjects = (payload: SeedCountPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/projects', 'POST', payload, token);
+};
+
+export const seedDummyGrantApplications = (payload: SeedApplicationsPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/grant-applications', 'POST', payload, token);
+};
+
+export const seedDummyProjectApplications = (payload: SeedApplicationsPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/project-applications', 'POST', payload, token);
+};
+
+export const seedAllSampleData = (payload: SeedAllPayload, token: string | null): Promise<SeedResponse> => {
+  return request<SeedResponse>('/admin-data/seed/all-sample-data', 'POST', payload, token);
 };

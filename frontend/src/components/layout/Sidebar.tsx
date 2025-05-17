@@ -18,7 +18,10 @@ import {
   PlusSquare,
   LayoutGrid, // For Dashboard
   ShieldCheck, // For Admin section
-  Database, // For Data Editor (Admin)
+  // Database, // For Data Editor (Admin)
+  DatabaseZap, 
+  LayoutDashboard, 
+  Edit,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // Import useAuth to check for admin status
@@ -89,14 +92,49 @@ export function Sidebar({ isAdmin }: SidebarProps) { // Use isAdmin directly
   ];
 
   const adminNavItems = [
-    { href: "/admin/data-editor", icon: Database, label: "Data Editor" },
+    {
+      href: '/admin/dashboard',
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+    },
+    {
+      href: '/admin/users', // Assuming you have or will have a user management page
+      icon: Users,
+      label: 'User Management',
+    },
+    {
+      href: '/admin/data-editor', // Existing page
+      icon: Edit,
+      label: 'Data Editor',
+    },
+    { // New Item for Data Seeding
+      href: '/admin/data-seeding',
+      icon: DatabaseZap,
+      label: 'Data Seeding',
+    },
     // Add more admin-specific links here, e.g., user management, platform settings
     // { href: "/admin/users", icon: Users, label: "Manage Users" },
     // { href: "/admin/settings", icon: Settings, label: "Admin Settings" },
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
+    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex overflow-y-auto scrollbar-thin">
+      <style jsx>{`
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 2px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: hsl(var(--muted-foreground) / 0.3);
+        border-radius: 20px;
+      }
+      .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+      }
+      `}</style>
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <Link
           href="/"

@@ -6,7 +6,8 @@ from app.models.user import UserRole # Import the enum
 # Base properties shared by all user schemas
 class UserBase(BaseModel):
     wallet_address: str = Field(..., examples=["0x123...abc"])
-    email: Optional[EmailStr] = None
+    email: Optional[EmailStr] = None # Optional for wallet-based auth
+    password: Optional[str] = None # For password-based auth
     full_name: Optional[str] = None
     role: UserRole = UserRole.STUDENT
     is_active: Optional[bool] = True
@@ -21,6 +22,7 @@ class UserCreate(UserBase):
 # Properties to receive on user update
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
+    password: Optional[str] = None
     full_name: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None

@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
+from pydantic import BaseModel, Field
 import sqlalchemy
 from sqlalchemy.orm import Session
-from sqlalchemy import text, inspect # For dynamic queries and inspection
+from sqlalchemy import func, text, inspect # For dynamic queries and inspection
 from typing import List, Dict, Any, Optional
 
 from app.db.session import get_db
 from app.api import deps
 from app.models import User # Import one of your models to get Base.metadata for table listing
 from app.db.base_class import Base
-from app import models # To access metadata for all tables
+from app import models, schemas, crud
+from app.utils import seeding
 
 router = APIRouter()
 
@@ -259,12 +261,14 @@ async def update_table_row(
 async def delete_table_row(
     table_name: str,
     row_id_str: str, # Assuming single integer PK
+    cascade: bool = Query(False, description="Whether to cascade delete dependent records."),
     db: Session = Depends(get_db),
     current_admin: models.User = Depends(deps.get_current_active_superuser)
 ):
     """
     Delete a row from the table by its primary key.
     Assumes a single primary key for simplicity.
+    - When cascade=True, will attempt to delete dependent records first
     """
     if table_name not in Base.metadata.tables:
         raise HTTPException(status_code=404, detail=f"Table '{table_name}' not found.")
@@ -288,6 +292,36 @@ async def delete_table_row(
         raise HTTPException(status_code=400, detail=f"Invalid ID format for primary key '{primary_key_column.name}'.")
 
     try:
+        try:
+            # If cascade is enabled and this is the users table, handle dependencies
+            if cascade:
+                if table_name == 'users':
+                    # Example: Delete dependent projects first
+                    projects_table = Base.metadata.tables['projects']
+                    delete_projects = projects_table.delete().where(projects_table.c.creator_id == row_id_typed)
+                    db.execute(delete_projects)
+                
+                if table_name == 'profiles':
+                    # Example: Delete dependent publications first
+                    publications_table = Base.metadata.tables['publications']
+                    delete_publications = publications_table.delete().where(publications_table.c.profile_id == row_id_typed)
+                    db.execute(delete_publications)
+
+                if table_name == 'grants':
+                    # Example: Delete dependent applications first
+                    applications_table = Base.metadata.tables['applications']
+                    delete_applications = applications_table.delete().where(applications_table.c.grant_id == row_id_typed)
+                    db.execute(delete_applications)
+                if table_name == 'projects':
+                    # Example: Delete dependent applications first
+                    applications_table = Base.metadata.tables['applications']
+                    delete_applications = applications_table.delete().where(applications_table.c.project_id == row_id_typed)
+                    db.execute(delete_applications)
+
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Error handling dependencies: {str(e)}")
+                
         stmt = table.delete().where(primary_key_column == row_id_typed)
         result = db.execute(stmt)
         
@@ -325,3 +359,225 @@ async def delete_table_row(
 #     except Exception as e:
 #         db.rollback()
 #         raise HTTPException(status_code=400, detail=f"SQL Error: {str(e)}")
+
+
+# --- Pydantic Models for Seeding Request Payloads ---
+
+class SeedCountRequest(BaseModel):
+    count: int = Field(default=10, gt=0, le=100, description="Number of items to create.")
+
+class SeedUsersRequest(BaseModel):
+    count: int = Field(default=10, gt=0, le=50, description="Number of users to create.")
+
+class SeedProfilesRequest(BaseModel):
+    user_ids: Optional[List[int]] = Field(default=None, description="Optional list of user IDs to create profiles for. If None, attempts to create for recent users without profiles.")
+    num_recent_users: int = Field(default=5, gt=0, le=20, description="Number of recent users to check if user_ids is not provided.")
+
+class SeedPublicationsRequest(BaseModel):
+    profile_ids: Optional[List[int]] = Field(default=None, description="Optional list of profile IDs to add publications to.")
+    num_recent_profiles: int = Field(default=5, gt=0, le=20)
+    pubs_per_profile_avg: int = Field(default=2, gt=0, le=10)
+
+class SeedGrantsRequest(SeedCountRequest):
+    pass # Uses count from SeedCountRequest
+
+class SeedProjectsRequest(SeedCountRequest):
+    pass # Uses count from SeedCountRequest
+
+class SeedApplicationsRequest(BaseModel):
+    target_ids: Optional[List[int]] = Field(default=None, description="Optional list of Grant/Project IDs to create applications for.")
+    num_recent_targets: int = Field(default=3, gt=0, le=10)
+    apps_per_target_avg: int = Field(default=2, gt=0, le=5)
+    num_applicants: int = Field(default=5, gt=0, le=20)
+
+class SeedAllRequest(BaseModel):
+    num_users: int = Field(default=20, gt=0, le=100)
+    num_grants: int = Field(default=8, gt=0, le=50)
+    num_projects: int = Field(default=12, gt=0, le=50)
+    pubs_per_profile_avg: int = Field(default=2, gt=0, le=5)
+    apps_per_grant_avg: int = Field(default=3, gt=0, le=5)
+    apps_per_project_avg: int = Field(default=2, gt=0, le=5)
+
+
+# --- Seeding Endpoints ---
+
+@router.post("/seed/users", summary="Populate Users with Dummy Data", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_users_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedUsersRequest
+):
+    """
+    Creates a specified number of dummy users with varied roles.
+    - **count**: Number of users to create.
+    """
+    users = seeding.create_dummy_users(db, count=request_body.count)
+    return {"message": f"Successfully created {len(users)} dummy users.", "users_created": len(users)}
+
+@router.post("/seed/profiles-with-details", summary="Populate Profiles with Details", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_profiles_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedProfilesRequest
+):
+    """
+    Creates dummy profiles, experiences, and education records.
+    - **user_ids**: Specific user IDs to create profiles for.
+    - **num_recent_users**: If user_ids is null, create profiles for this many recent non-admin users without profiles.
+    """
+    target_users: List[models.User] = []
+    if request_body.user_ids:
+        target_users = db.query(models.User).filter(models.User.id.in_(request_body.user_ids), models.User.role != models.UserRole.ADMIN).all()
+    else:
+        # Attempt to find users without profiles
+        users_with_profiles_q = db.query(models.Profile.user_id)
+        target_users = db.query(models.User).filter(
+            models.User.role != models.UserRole.ADMIN,
+            ~models.User.id.in_(users_with_profiles_q) # Not in users_with_profiles
+        ).order_by(models.User.id.desc()).limit(request_body.num_recent_users).all()
+
+    if not target_users:
+        return {"message": "No suitable users found or provided to create profiles for.", "profiles_created": 0}
+
+    profiles = seeding.create_dummy_profiles_with_details(db, users=target_users)
+    return {"message": f"Successfully created/processed {len(profiles)} profiles with details.", "profiles_created": len(profiles)}
+
+
+@router.post("/seed/publications", summary="Populate Publications for Profiles", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_publications_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedPublicationsRequest
+):
+    """
+    Creates dummy publications for specified or recent profiles.
+    - **profile_ids**: Specific profile IDs to add publications to.
+    - **num_recent_profiles**: If profile_ids is null, use this many recent profiles.
+    - **pubs_per_profile_avg**: Average number of publications per profile.
+    """
+    target_profiles: List[models.Profile] = []
+    if request_body.profile_ids:
+        target_profiles = db.query(models.Profile).filter(models.Profile.id.in_(request_body.profile_ids)).all()
+    else:
+        target_profiles = db.query(models.Profile).order_by(models.Profile.id.desc()).limit(request_body.num_recent_profiles).all()
+
+    if not target_profiles:
+        return {"message": "No suitable profiles found or provided.", "publications_created": 0}
+    
+    publications = seeding.create_dummy_publications(db, profiles=target_profiles, pubs_per_profile_avg=request_body.pubs_per_profile_avg)
+    return {"message": f"Successfully created {len(publications)} publications.", "publications_created": len(publications)}
+
+
+@router.post("/seed/grants", summary="Populate Grants with Dummy Data", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_grants_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedGrantsRequest
+):
+    # Define preferred roles for funders
+    specific_funder_roles = ["admin", "institution"]
+
+    # Attempt to find users with specific roles (ADMIN, INSTITUTION)
+    funder_users = db.query(models.User).filter(
+        models.User.role.in_(specific_funder_roles)
+    ).order_by(func.random()).limit(10).all()
+
+    if not funder_users: # If no admin/institution, use any user (less ideal)
+        funder_users = db.query(models.User).order_by(func.random()).limit(5).all()
+    if not funder_users: # If still no users at all
+         raise HTTPException(status_code=400, detail="No users available in the database to act as funders.")
+
+    grants = seeding.create_dummy_grants(db, proposer_users=funder_users, count=request_body.count)
+    return {"message": f"Successfully created {len(grants)} dummy grants.", "grants_created": len(grants)}
+
+
+@router.post("/seed/projects", summary="Populate Projects with Dummy Data", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_projects_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedProjectsRequest
+):
+    # Get a variety of users to be project creators and team members
+    creator_users = db.query(models.User).order_by(func.random()).limit(max(20, request_body.count * 2)).all()
+    if not creator_users:
+         raise HTTPException(status_code=400, detail="No users available in the database to create projects.")
+    
+    # Get some grants to link projects to
+    grants = db.query(models.Grant).order_by(func.random()).limit(5).all() or []
+
+    projects = seeding.create_dummy_projects(db, creator_users=creator_users, grants=grants, count=request_body.count)
+    return {"message": f"Successfully created {len(projects)} dummy projects with team members.", "projects_created": len(projects)}
+
+
+@router.post("/seed/grant-applications", summary="Populate Grant Applications", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_grant_applications_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedApplicationsRequest
+):
+    target_grants: List[models.Grant] = []
+    if request_body.target_ids:
+        target_grants = db.query(models.Grant).filter(models.Grant.id.in_(request_body.target_ids)).all()
+    else:
+        target_grants = db.query(models.Grant).order_by(models.Grant.id.desc()).limit(request_body.num_recent_targets).all()
+
+    applicant_users = db.query(models.User).filter(
+        models.User.role.in_([models.UserRole.RESEARCHER, models.UserRole.STUDENT])
+    ).order_by(func.random()).limit(request_body.num_applicants).all()
+
+    if not target_grants or not applicant_users:
+        return {"message": "Not enough grants or potential applicants found to create applications.", "applications_created": 0}
+
+    applications = seeding.create_dummy_grant_applications(db, grants=target_grants, applicant_users=applicant_users, apps_per_grant_avg=request_body.apps_per_target_avg)
+    return {"message": f"Successfully created {len(applications)} grant applications.", "applications_created": len(applications)}
+
+
+@router.post("/seed/project-applications", summary="Populate Project Applications", status_code=201, response_model=Dict[str, Any])
+def seed_dummy_project_applications_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedApplicationsRequest
+):
+    target_projects: List[models.Project] = []
+    if request_body.target_ids:
+        target_projects = db.query(models.Project).filter(models.Project.id.in_(request_body.target_ids)).all()
+    else:
+        target_projects = db.query(models.Project).order_by(models.Project.id.desc()).limit(request_body.num_recent_targets).all()
+
+    applicant_users = db.query(models.User).filter(
+        models.User.role.in_([models.UserRole.RESEARCHER, models.UserRole.STUDENT])
+    ).order_by(func.random()).limit(request_body.num_applicants).all()
+
+    if not target_projects or not applicant_users:
+        return {"message": "Not enough projects or potential applicants found to create applications.", "applications_created": 0}
+
+    applications = seeding.create_dummy_project_applications(db, projects=target_projects, applicant_users=applicant_users, apps_per_project_avg=request_body.apps_per_target_avg)
+    return {"message": f"Successfully created {len(applications)} project applications.", "applications_created": len(applications)}
+
+@router.post("/seed/all-sample-data", summary="Populate All Major Tables with Sample Data", status_code=201, response_model=Dict[str, Any])
+def seed_all_sample_data_endpoint(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_admin: models.User = Depends(deps.get_current_active_superuser),
+    request_body: SeedAllRequest
+):
+    """
+    Populates all major tables with a configurable amount of interconnected sample data.
+    """
+    results = seeding.seed_all_sample_data(
+        db,
+        num_users=request_body.num_users,
+        num_grants=request_body.num_grants,
+        num_projects=request_body.num_projects,
+        pubs_per_profile_avg=request_body.pubs_per_profile_avg,
+        apps_per_grant_avg=request_body.apps_per_grant_avg,
+        apps_per_project_avg=request_body.apps_per_project_avg
+    )
+    return {"message": "Comprehensive sample data seeding completed successfully.", "details": results}
