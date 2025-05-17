@@ -5,10 +5,10 @@ import datetime
 
 # --- Experience Schemas ---
 class ExperienceBase(BaseModel):
-    title: str
-    company: str
+    title: Optional[str] = None
+    institution: Optional[str] = None
     location: Optional[str] = None
-    start_date: datetime.date
+    start_date: Optional[datetime.date] = None
     end_date: Optional[datetime.date] = None
     description: Optional[str] = None
 
@@ -83,7 +83,8 @@ class Publication(PublicationBase): # For reading from DB
 class ProfileBase(BaseModel):
     headline: Optional[str] = None
     bio: Optional[str] = None
-    skills: Optional[str] = None # Consider List[str] and handle conversion if needed
+    skills: Optional[List[str]] = None # Consider List[str] and handle conversion if needed
+    research_interests: Optional[List[str]] = None
     website: Optional[HttpUrl] = None
     linkedin_url: Optional[HttpUrl] = None
     github_url: Optional[HttpUrl] = None
