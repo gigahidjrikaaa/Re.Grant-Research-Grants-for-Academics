@@ -19,7 +19,8 @@ from .profile import (
 # Add Grant schemas
 from .grant import (
     Grant, GrantCreate, GrantUpdate,
-    GrantApplication, GrantApplicationCreate, GrantApplicationUpdate
+    GrantApplication, GrantApplicationCreate, GrantApplicationUpdate,
+    GrantMilestoneSchema, GrantMilestoneCreate, GrantMilestoneUpdate,
 )
 # Add Project schemas
 from .project import (
