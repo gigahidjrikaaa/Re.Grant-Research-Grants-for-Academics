@@ -40,7 +40,10 @@ class User(Base):
         foreign_keys="app.models.project.Project.creator_id" # String reference to Column
     )
     member_of_projects = relationship("ProjectTeamMember", back_populates="user")
-    project_applications = relationship("ProjectApplication", back_populates="applicant")
+    project_applications_made = relationship(
+        "ProjectApplication",  # The class name it links to
+        back_populates="applicant" # This matches ProjectApplication.applicant's back_populates
+    ) 
 
     # Relationships are defined in other files and will link back here
     # e.g., Profile.user = relationship("User", back_populates="profile")
