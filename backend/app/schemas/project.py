@@ -90,6 +90,9 @@ class ProjectApplication(ProjectApplicationInDBBase):
     applicant: Optional[UserSchema] = None
     project: Optional[ProjectInDBBase] = None # Simplified to avoid deep recursion
 
+class ProjectTeamMemberUpdate(BaseModel):
+    role_in_project: Optional[str] = None
+
 # To handle forward reference if Project schema includes List[ProjectApplication]
 # Project.model_rebuild() # Pydantic v2
 # Project.update_forward_refs() # Pydantic v1
