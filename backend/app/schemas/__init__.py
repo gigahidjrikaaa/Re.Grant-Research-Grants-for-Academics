@@ -40,6 +40,7 @@ __all__ = [
     
     "Grant", "GrantCreate", "GrantUpdate",
     "GrantApplication", "GrantApplicationCreate", "GrantApplicationUpdate",
+    "GrantMilestoneSchema", "GrantMilestoneCreate", "GrantMilestoneUpdate",
     
     "Project", "ProjectCreate", "ProjectUpdate",
     "ProjectTeamMember", "ProjectTeamMemberCreate", "ProjectTeamMemberUpdate",
