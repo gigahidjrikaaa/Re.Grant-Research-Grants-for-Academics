@@ -68,8 +68,8 @@ def create_dummy_profiles_with_details(db: Session, users: List[models.User]) ->
             "website_url": fake.url() if random.choice([True, False]) else None,
             "orcid_id": fake.bothify(text="????-????-????-????") if user.role == models.UserRole.RESEARCHER else None,
             "about": fake.paragraph(nb_sentences=random.randint(3, 7)),
-            "skills": fake.words(nb=random.randint(3, 7), unique=True),
-            "research_interests": fake.words(nb=random.randint(2, 5), unique=True) if user.role != models.UserRole.INSTITUTION else None,
+            "skills": fake.words(nb=random.randint(3, 6), unique=True),
+            "research_interests": fake.words(nb=random.randint(2, 5), unique=True) if user.role != models.UserRole.INSTITUTION and random.choice([True,True,False]) else None, # MODIFIED
             "is_visible_in_talent_pool": random.choice([True, False])
         }
         profile = models.Profile(**profile_data)
@@ -83,17 +83,22 @@ def create_dummy_profiles_with_details(db: Session, users: List[models.User]) ->
             if end_date_exp and end_date_exp <= start_date_exp:
                 end_date_exp = start_date_exp + datetime.timedelta(days=random.randint(180, 730))
             db.add(models.Experience(
-                profile_id=profile.id, title=fake.job(), institution=fake.company(),
+                profile_id=profile.id, title=fake.job(), institution=fake.company(), # MODIFIED company to institution
                 start_date=start_date_exp, end_date=end_date_exp, description=fake.paragraph(nb_sentences=2)
             ))
         # Education
         for _ in range(random.randint(1, 2)):
             grad_date = fake.date_between(start_date='-8y', end_date='-1y')
-            db.add(models.Education(
-                profile_id=profile.id, degree=random.choice(["Bachelor's", "Master's", "PhD"]),
-                institution=f"{fake.last_name()} University", major=fake.bs().title(),
-                graduation_date=grad_date, description=fake.sentence()
-            ))
+            education_data = { # MODIFIED to build dict first for clarity
+                "profile_id": profile.id,
+                "degree": random.choice(["Bachelor's", "Master's", "PhD"]),
+                "institution": f"{fake.last_name()} University", # MODIFIED institution_name to institution
+                "major": fake.bs().title(), # Model has major
+                "graduation_date": grad_date, # Model has graduation_date
+                "description": fake.sentence()
+            }
+            # Removed: field_of_study, end_date, start_date as they are not in the current Education model
+            db.add(models.Education(**education_data))
         created_profiles.append(profile)
     db.commit()
     return created_profiles
@@ -115,8 +120,9 @@ def create_dummy_publications(db: Session, profiles: List[models.Profile], pubs_
                 "link": fake.url() if random.choice([True, False]) else None,
                 "abstract": fake.paragraph(nb_sentences=random.randint(3, 6))
             }
-            db.add(models.Publication(**pub_data))
-            created_publications.append(models.Publication(**pub_data)) # Add instance for return
+            publication_obj = models.Publication(**pub_data) # MODIFIED
+            db.add(publication_obj) # MODIFIED
+            created_publications.append(publication_obj) # MODIFIED
     db.commit()
     return created_publications
 
@@ -138,7 +144,7 @@ def create_dummy_grants(db: Session, proposer_users: List[models.User], count: i
             "end_date_expected": fake.date_object(),
             "eligibility_criteria": fake.text(max_nb_chars=200),
             "website_link": fake.url() if random.choice([True, False]) else None,
-            "talent_requirements": {"roles_needed": fake.words(nb=2), "skills": fake.words(nb=3)}
+            "talent_requirements": {"roles_needed": fake.words(nb=2), "skills": ", ".join(fake.words(nb=random.randint(2, 4), unique=True)),}
         }
         grant = models.Grant(**grant_data)
         db.add(grant)
@@ -165,7 +171,7 @@ def create_dummy_projects(db: Session, creator_users: List[models.User], grants:
             "status": random.choice(list(models.ProjectStatus)),
             "category": random.choice(list(models.ProjectCategory)),
             "expected_duration": f"{random.randint(2,12)} months",
-            "required_skills": fake.words(nb=random.randint(3,6), unique=True),
+            "required_skills": fake.words(nb=random.randint(4, 6), unique=True), # MODIFIED to list
             "roles_available": {"lead_researcher": fake.name(), "positions": random.randint(1,3)},
             "budget": random.uniform(5000, 100000) if random.choice([True, False]) else None,
             "grant_id": random.choice(grants).id if grants and random.choice([True, False, False]) else None,
@@ -178,8 +184,8 @@ def create_dummy_projects(db: Session, creator_users: List[models.User], grants:
         for member_user in members_to_add:
             if member_user.id != project.creator_id: # Creator is implicitly involved
                  # Check if already a member
-                if not db.query(models.ProjectMember).filter_by(project_id=project.id, user_id=member_user.id).first():
-                    db.add(models.ProjectMember(
+                if not db.query(models.ProjectTeamMember).filter_by(project_id=project.id, user_id=member_user.id).first():
+                    db.add(models.ProjectTeamMember(
                         project_id=project.id, user_id=member_user.id,
                         role_in_project=random.choice(["Developer", "Researcher", "Analyst", "Advisor"])
                     ))
@@ -202,8 +208,9 @@ def create_dummy_grant_applications(db: Session, grants: List[models.Grant], app
                 "status": random.choice(list(models.GrantApplicationStatus)),
                 "submitted_at": fake.date_time_this_year(before_now=True, after_now=False)
             }
-            db.add(models.GrantApplication(**app_data))
-            created_applications.append(models.GrantApplication(**app_data))
+            application_obj = models.GrantApplication(**app_data) # MODIFIED
+            db.add(application_obj) # MODIFIED
+            created_applications.append(application_obj) # MODIFIED
     db.commit()
     return created_applications
 
@@ -217,7 +224,7 @@ def create_dummy_project_applications(db: Session, projects: List[models.Project
             if db.query(models.ProjectApplication).filter_by(project_id=project_item.id, user_id=applicant.id).first():
                 continue
             # Ensure applicant is not already a member of this project
-            if db.query(models.ProjectMember).filter_by(project_id=project_item.id, user_id=applicant.id).first():
+            if db.query(models.ProjectTeamMember).filter_by(project_id=project_item.id, user_id=applicant.id).first():
                 continue
 
             app_data = {
@@ -226,8 +233,9 @@ def create_dummy_project_applications(db: Session, projects: List[models.Project
                 "status": random.choice(list(models.ProjectApplicationStatus)),
                 "application_date": fake.date_object()
             }
-            db.add(models.ProjectApplication(**app_data))
-            created_applications.append(models.ProjectApplication(**app_data))
+            application_obj = models.ProjectApplication(**app_data) # MODIFIED
+            db.add(application_obj) # MODIFIED
+            created_applications.append(application_obj) # MODIFIED
     db.commit()
     return created_applications
 

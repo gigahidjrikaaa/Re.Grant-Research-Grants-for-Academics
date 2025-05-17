@@ -1,44 +1,128 @@
-// src/app/(main)/project-board/page.tsx
 'use client';
 
+import { useEffect, useState } from 'react'; // Import useEffect and useState
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Briefcase, PlusCircle } from 'lucide-react';
+import { Search, Filter, Briefcase, PlusCircle, Loader2 } from 'lucide-react'; // Added Loader2
 import Link from "next/link";
 
-// Placeholder data structure for project postings
-interface ProjectPosting {
-  id: string;
+// Interface for the raw data structure from the backend (matches schemas.Project)
+interface BackendProjectData {
+  id: number;
   title: string;
-  postedBy: string; // Researcher/Lead Name
-  requiredSkills: string[];
-  duration: string; // e.g., "3 Months", "Approx. 10 hrs/week"
-  status: 'Open' | 'Filled' | 'Closed'; // Simplified status
+  description: string; // Available if needed for detail page
+  category: string; // e.g., "technology", "science"
+  status: string; // e.g., "open", "in_progress" (from ProjectStatus enum)
+  expected_duration: string | null;
+  required_skills: string[] | null;
+  // budget: number | null; // Available
+  // start_date: string | null; // Available (ISO date string)
+  // end_date: string | null; // Available (ISO date string)
+  creator: {
+    id: number;
+    full_name: string | null;
+    // email: string | null; // Available
+    // role: string; // Available
+  } | null;
+  // team_members: any[]; // Available if needed
+  created_at: string; // Available (ISO datetime string)
+  // updated_at: string | null; // Available
 }
 
-// Placeholder data - replace with actual data fetching later
-const projectData: ProjectPosting[] = [
-  { id: 'p1', title: 'Frontend Development for Grant Platform UI', postedBy: 'Dr. Budi Santoso', requiredSkills: ['React', 'Next.js', 'Tailwind CSS'], duration: '4 Weeks', status: 'Open' },
-  { id: 'p2', title: 'Lisk Smart Contract Auditing Assistant', postedBy: 'Prof. Adi Nugroho', requiredSkills: ['Solidity', 'Security Analysis', 'Foundry'], duration: 'Part-time, 2 Months', status: 'Open' },
-  { id: 'p3', title: 'Data Analysis for Sensor Network Readings', postedBy: 'Dr. Rini Wulandari', requiredSkills: ['Python', 'Pandas', 'Signal Processing'], duration: 'Project-based (Est. 80 hours)', status: 'Closed' },
-];
+// Frontend-specific display interface (similar to your ProjectPosting)
+interface ProjectDisplayData {
+  id: string;
+  title: string;
+  postedBy: string;
+  requiredSkills: string[];
+  duration: string;
+  status: string; // Will hold the backend status string directly
+  category: string; // Added category
+}
 
 export default function ProjectBoardPage() {
-  // State for search and filters (implement later)
+  const [projects, setProjects] = useState<ProjectDisplayData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   // const [searchTerm, setSearchTerm] = useState('');
   // const [filters, setFilters] = useState({});
 
-  // Helper function to determine badge variant based on status
-  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-      switch (status.toLowerCase()) {
-          case 'open': return 'default';
-          case 'filled': return 'secondary';
-          case 'closed': return 'outline';
-          default: return 'secondary';
-      }
+  const mapBackendToDisplayData = (project: BackendProjectData): ProjectDisplayData => {
+    return {
+      id: project.id.toString(),
+      title: project.title,
+      postedBy: project.creator?.full_name || 'N/A',
+      requiredSkills: project.required_skills || [],
+      duration: project.expected_duration || 'Not specified',
+      status: project.status, // Use backend status directly
+      category: project.category.charAt(0).toUpperCase() + project.category.slice(1) || 'Other', // Capitalize
+    };
   };
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+          throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText} - ${errorData.detail}`);
+        }
+        const data: BackendProjectData[] = await response.json();
+        setProjects(data.map(mapBackendToDisplayData));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        console.error("Error fetching projects:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status?.toLowerCase()) {
+      case 'open':
+        return 'default'; // Green or primary
+      case 'in_progress':
+        return 'secondary'; // Blue or another color
+      case 'completed':
+        return 'outline'; // Greyed out
+      case 'on_hold':
+        return 'secondary'; // Yellow or orange
+      case 'cancelled':
+        return 'destructive'; // Red
+      default:
+        return 'outline';
+    }
+  };
+  
+  const getStatusDisplayName = (status: string): string => {
+    return status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
+  }
+
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-blue" />
+        <p className="ml-2 text-gray-600">Loading projects...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500">Error: {error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -73,48 +157,52 @@ export default function ProjectBoardPage() {
         <Button variant="outline" className="flex-shrink-0">
            <Filter className="mr-2 h-4 w-4" /> Filters
         </Button>
-         {/* Implement filter dropdown/modal later */}
       </div>
 
       {/* Project List */}
+      {projects.length === 0 && !isLoading && (
+        <p className="text-gray-500 col-span-full text-center py-10">No open projects found.</p>
+      )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {projectData.map((project) => (
+        {projects.map((project) => (
           <Card key={project.id} className="flex flex-col justify-between hover:shadow-lg transition-shadow duration-200">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg mb-1">{project.title}</CardTitle>
-                <Badge variant={getStatusVariant(project.status)} className="text-xs capitalize">{project.status}</Badge>
+              <div className="flex justify-between items-start mb-1">
+                <CardTitle className="text-lg">{project.title}</CardTitle>
+                <Badge variant={getStatusVariant(project.status)} className="text-xs capitalize">
+                  {getStatusDisplayName(project.status)}
+                </Badge>
               </div>
-              <CardDescription>Posted by: {project.postedBy}</CardDescription>
+              <CardDescription>
+                Posted by: {project.postedBy} <span className="text-gray-400 mx-1">•</span> Category: {project.category}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow text-sm space-y-2">
+            <CardContent className="flex-grow text-sm space-y-3">
                 <div>
                     <h4 className="font-medium mb-1 text-gray-600 text-xs uppercase tracking-wider">Required Skills:</h4>
                     <div className="flex flex-wrap gap-1">
-                        {project.requiredSkills.slice(0, 3).map((skill, index) => ( // Show only first few skills
-                            <Badge key={index} variant="secondary">{skill}</Badge>
-                        ))}
-                        {project.requiredSkills.length > 3 && <Badge variant="secondary">...</Badge>}
+                        {project.requiredSkills.length > 0 ? 
+                            project.requiredSkills.slice(0, 4).map((skill, index) => (
+                                <Badge key={index} variant="secondary" className="font-normal">{skill}</Badge>
+                            )) : 
+                            <span className="text-xs text-gray-500">Not specified</span>
+                        }
+                        {project.requiredSkills.length > 4 && <Badge variant="secondary" className="font-normal">...</Badge>}
                     </div>
                 </div>
                  <div>
-                    <h4 className="font-medium mb-1 text-gray-600 text-xs uppercase tracking-wider">Duration:</h4>
+                    <h4 className="font-medium mb-1 text-gray-600 text-xs uppercase tracking-wider">Expected Duration:</h4>
                     <p className="text-gray-700">{project.duration}</p>
                  </div>
             </CardContent>
             <CardFooter className="pt-4 border-t">
                  <Link href={`/project-board/${project.id}`} className="w-full">
-                    <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                    <Button variant="outline" size="sm" className="w-full hover:bg-primary-blue/10">View Details</Button>
                  </Link>
             </CardFooter>
           </Card>
         ))}
-         {/* Add message if no projects found */}
-         {projectData.length === 0 && (
-            <p className="text-gray-500 col-span-full text-center py-10">No open projects found.</p>
-         )}
       </div>
-       {/* Add pagination controls here later */}
     </div>
   );
 }

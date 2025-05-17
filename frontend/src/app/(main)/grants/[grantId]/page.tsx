@@ -1,190 +1,131 @@
-// src/app/(main)/grants/[grantId]/page.tsx
-// Grant Detail Page
+'use client';
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-// import { notFound } from 'next/navigation'; // Uncomment if you want to use notFound() for missing grants
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Grant } from '@/types/api'; // Adjust path
+import { getGrantById } from '@/lib/apiService';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import PageLoader from '@/components/ui/PageLoader';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge'; // Import Badge UI component
+import { ArrowLeft, CalendarDays, DollarSign, LinkIcon } from 'lucide-react'; // Removed Badge from here
+import { format } from 'date-fns';
+import Link from 'next/link'; // Import Link
 
-type GrantMilestone = {
-  id: string;
-  description: string;
-  status: string;
-  funded: boolean;
-};
+export default function GrantDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const grantId = params.grantId as string;
 
-type GrantDocument = {
-  name: string;
-  ipfsHash: string;
-};
+  const [grant, setGrant] = useState<Grant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { token, user } = useAuth(); // Assuming user might be needed for "Apply" button logic
 
-type GrantDetails = {
-  id: string;
-  title: string;
-  pi: string;
-  status: string;
-  amount: string;
-  abstract: string;
-  milestones: GrantMilestone[];
-  documents: GrantDocument[];
-};
+  useEffect(() => {
+    if (!grantId) return;
 
-type GrantDetailPageParams = {
-  grantId: string;
-};
-
-type GrantDetailPageProps = {
-  params: GrantDetailPageParams;
-  // searchParams?: { [key: string]: string | string[] | undefined }; // Add if you use searchParams
-};
-
-// Helper function to simulate fetching grant details
-async function fetchGrantDetailsById(grantId: string): Promise<GrantDetails | null> {
-  console.log(`Fetching details for grant: ${grantId}`);
-  // Replace this with your actual data fetching logic (e.g., API call)
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulating data found
-      if (grantId === "error") { // Simulate not found
-          resolve(null);
-          return;
+    const fetchGrantDetail = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getGrantById(grantId, token);
+        setGrant(data);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : `Failed to fetch grant (ID: ${grantId}). An unexpected error occurred.`;
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setIsLoading(false);
       }
-      resolve({
-        id: grantId,
-        title: `Research on Advanced Lisk L2 Scaling Solutions - Grant ${grantId}`,
-        pi: 'Dr. Chandra Wijaya (Fetched)',
-        status: 'Active', // Example statuses: Active, Completed, Pending Review, Rejected
-        amount: '15,000,000 IDRX',
-        abstract: `This research project aims to explore and develop novel layer 2 scaling solutions on the Lisk blockchain. By focusing on ${grantId}, we intend to enhance transaction throughput and reduce latency, paving the way for more complex decentralized applications. The project involves theoretical analysis, prototype development, and rigorous performance benchmarking.`,
-        milestones: [
-          { id: 'm1', description: 'Literature Review and Theoretical Framework', status: 'Completed', funded: true },
-          { id: 'm2', description: 'Prototype Development of Scaling Solution', status: 'In Progress', funded: true },
-          { id: 'm3', description: 'Benchmarking and Performance Analysis', status: 'Pending', funded: false },
-          { id: 'm4', description: 'Final Report and Dissemination', status: 'Pending', funded: false },
-        ],
-        documents: [
-          { name: `Grant_Proposal_${grantId}.pdf`, ipfsHash: 'QmXyZ...ExampleHash1' },
-          { name: `Ethics_Approval_${grantId}.pdf`, ipfsHash: 'QmAbC...ExampleHash2' },
-        ],
-      });
-    }, 750); // Simulate network delay
-  });
-}
+    };
 
-// This component fetches data based on the grantId param, so it's an async Server Component.
-export default async function GrantDetailPage({ params }: GrantDetailPageProps) {
-  const { grantId } = params;
+    fetchGrantDetail();
+  }, [grantId, token]);
 
-  const grantDetails = await fetchGrantDetailsById(grantId);
+  if (isLoading) return <PageLoader isLoading={isLoading} />;
+  if (error) return <div className="text-center py-10 text-red-600">Error: {error} <Button onClick={() => router.back()} variant="link">Go back</Button></div>;
+  if (!grant) return <div className="text-center py-10">Grant not found. <Button onClick={() => router.back()} variant="link">Go back</Button></div>;
 
-  if (!grantDetails) {
-    // If grant is not found, you can use Next.js's notFound() function
-    // to render the nearest not-found.tsx page.
-    // notFound();
-    // Alternatively, render a custom message:
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <h1 className="text-2xl font-semibold text-destructive mb-4">Grant Not Found</h1>
-        <p className="text-muted-foreground">
-          The grant with ID <span className="font-medium">{grantId}</span> could not be found.
-        </p>
-      </div>
-    );
-  }
-
-  // Helper function to determine badge variant based on status
-  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-      switch (status.toLowerCase()) {
-          case 'active':
-          case 'in progress':
-              return 'default'; // Or a specific 'info' or 'primary' color if defined
-          case 'completed':
-          case 'funded':
-              return 'default'; // Using default instead of success
-          case 'pending review':
-          case 'pending':
-              return 'secondary';
-          case 'rejected':
-              return 'destructive';
-          default:
-              return 'outline';
-      }
-  };
+  const funderName = grant.proposer?.full_name || 'N/A';
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4 border-b">
-        <div className="flex-grow">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">{grantDetails.title}</h1>
-            <p className="text-sm text-muted-foreground">Principal Investigator: {grantDetails.pi}</p>
-            <p className="text-sm text-muted-foreground">Total Amount: <span className="font-semibold text-primary">{grantDetails.amount}</span></p>
-        </div>
-        <Badge variant={getStatusVariant(grantDetails.status)} className="text-sm capitalize px-3 py-1.5 self-start sm:self-auto mt-2 sm:mt-0">
-          {grantDetails.status}
-        </Badge>
-      </div>
+    <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+      <Button onClick={() => router.back()} variant="outline" className="mb-6">
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Grants
+      </Button>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Abstract</CardTitle>
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+            <div>
+              <Badge variant="secondary" className="mb-2 text-sm">{grant.grant_type}</Badge>
+              <CardTitle className="text-2xl lg:text-3xl font-bold">{grant.title}</CardTitle>
+              <CardDescription className="text-lg text-muted-foreground mt-1">
+                Offered by: {funderName}
+              </CardDescription>
+            </div>
+            {/* Placeholder for Apply Button - logic depends on application system */}
+            {user && (
+              <Button asChild size="lg">
+                <Link href={`/apply?type=grant&id=${grant.id}`}>Apply Now</Link>
+              </Button>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground leading-relaxed">{grantDetails.abstract}</p>
-        </CardContent>
-      </Card>
+        <CardContent className="space-y-6 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+            <div className="flex items-start p-4 border rounded-lg">
+              <DollarSign className="h-5 w-5 mr-3 mt-1 text-primary flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-muted-foreground">Amount Awarded</p>
+                <p className="text-lg font-bold">{grant.currency} {Number(grant.total_funding_requested).toLocaleString()}</p>
+              </div>
+            </div>
+            {grant.application_start_date && (
+                 <div className="flex items-start p-4 border rounded-lg">
+                    <CalendarDays className="h-5 w-5 mr-3 mt-1 text-primary flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold text-muted-foreground">Application Opens</p>
+                        <p>{format(new Date(grant.application_start_date), "PPP")}</p>
+                    </div>
+                </div>
+            )}
+            <div className="flex items-start p-4 border rounded-lg">
+              <CalendarDays className="h-5 w-5 mr-3 mt-1 text-destructive flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-muted-foreground">Application Deadline</p>
+                <p>{format(new Date(grant.application_deadline), "PPP p")}</p>
+              </div>
+            </div>
+          </div>
 
-       <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Milestones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {grantDetails.milestones && grantDetails.milestones.length > 0 ? (
-            <ul className="space-y-3">
-              {grantDetails.milestones.map((milestone) => (
-                <li key={milestone.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors gap-2">
-                  <span className="text-sm md:text-base text-card-foreground flex-grow">{milestone.description}</span>
-                  <Badge variant={getStatusVariant(milestone.status)} className="capitalize text-xs px-2 py-1 self-start sm:self-auto">
-                    {milestone.status}
-                    {milestone.funded && milestone.status.toLowerCase() !== 'completed' && ' (Funded)'}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No milestones defined for this grant yet.</p>
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Description</h3>
+            <p className="text-muted-foreground whitespace-pre-wrap">{grant.description}</p>
+          </div>
+
+          {grant.eligibility_criteria && (
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Eligibility Criteria</h3>
+              <p className="text-muted-foreground whitespace-pre-wrap">{grant.eligibility_criteria}</p>
+            </div>
           )}
-        </CardContent>
-      </Card>
-
-       <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Documents</CardTitle>
-          {grantDetails.documents && grantDetails.documents.length > 0 && (
-            <CardDescription>Supporting documents related to the grant proposal.</CardDescription>
+          
+          {grant.website_link && (
+             <div>
+                <h3 className="text-xl font-semibold mb-2">Official Link</h3>
+                <a href={grant.website_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center">
+                    <LinkIcon className="h-4 w-4 mr-2"/>
+                    Visit Grant Website
+                </a>
+            </div>
           )}
-        </CardHeader>
-        <CardContent>
-           {grantDetails.documents && grantDetails.documents.length > 0 ? (
-             <ul className="list-disc list-inside space-y-1 pl-2">
-               {grantDetails.documents.map(doc => (
-                  <li key={doc.ipfsHash}>
-                      <a href={`https://ipfs.io/ipfs/${doc.ipfsHash}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm md:text-base">
-                          {doc.name}
-                      </a>
-                  </li>
-               ))}
-             </ul>
-           ) : (
-             <p className="text-sm text-muted-foreground">No documents uploaded for this grant.</p>
-           )}
+
         </CardContent>
       </Card>
-
-      {/* Potential future section:
-      <Card>
-        <CardHeader><CardTitle className="text-xl">Transaction History</CardTitle></CardHeader>
-        <CardContent><p className="text-sm text-muted-foreground">Transaction history will be displayed here.</p></CardContent>
-      </Card>
-      */}
     </div>
   );
 }

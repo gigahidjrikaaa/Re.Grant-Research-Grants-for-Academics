@@ -29,6 +29,22 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+    profile = relationship("Profile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+
+    grants_proposed = relationship("Grant", back_populates="proposer", foreign_keys="app.models.grant.Grant.proposer_id") # String FK
+    grant_applications = relationship("GrantApplication", back_populates="applicant", foreign_keys="app.models.grant.GrantApplication.applicant_id") # String FK
+
+    projects_created = relationship(
+        "Project", # String reference to model name
+        back_populates="creator", 
+        foreign_keys="app.models.project.Project.creator_id" # String reference to Column
+    )
+    member_of_projects = relationship("ProjectTeamMember", back_populates="user")
+    project_applications_made = relationship(
+        "ProjectApplication",  # The class name it links to
+        back_populates="applicant" # This matches ProjectApplication.applicant's back_populates
+    ) 
+
     # Relationships are defined in other files and will link back here
     # e.g., Profile.user = relationship("User", back_populates="profile")
     # User.profile will be set in profile.py or models/__init__.py

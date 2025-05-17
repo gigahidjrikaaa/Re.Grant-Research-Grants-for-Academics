@@ -70,6 +70,7 @@ class Grant(Base):
 
     def __repr__(self):
         return f"<Grant(id={self.id}, title='{self.title}', status='{self.status.value}')>"
+    
 
 class GrantMilestone(Base):
     __tablename__ = "grant_milestones"
