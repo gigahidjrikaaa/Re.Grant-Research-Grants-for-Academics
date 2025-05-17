@@ -16,13 +16,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
-import { Wallet as WalletIcon, LogOut, ChevronDown, UserCheck, ShieldAlert } from 'lucide-react';
+import { Wallet as WalletIcon, LogOut, ChevronDown, UserCheck, ShieldAlert, User as UserIcon } from 'lucide-react';
 import { useAppWalletProvider } from '@/contexts/WalletProviderContext';
 import { WalletProviderType } from '@/lib/wallet-providers/types';
 import { shortenAddress } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 import { toast } from 'sonner';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import Link from 'next/link';
 
 const CustomConnectWalletButton: React.FC = () => {
   const { address: evmAddress, isConnected: isEvmConnected } = useAccount();
@@ -116,7 +117,12 @@ const CustomConnectWalletButton: React.FC = () => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Authenticated ({authenticatedUser.role})</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {/* Use appLogout from AuthContext here */}
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/profile">
+              <UserIcon className="mr-2 h-4 w-4" />
+              View Profile
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={appLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             Log Out
