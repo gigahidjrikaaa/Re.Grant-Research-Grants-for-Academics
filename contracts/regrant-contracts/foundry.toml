@@ -26,8 +26,8 @@ lisk_sepolia = "https://rpc.sepolia-api.lisk.com"
 # For now, we'll assume manual verification or investigate Blockscout API compatibility later.
 
 # Remappings for easier imports (optional but good practice)
-remappings = [
-    '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
-]
+# remappings = [
+#     '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
+# ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
