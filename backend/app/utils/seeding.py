@@ -68,7 +68,7 @@ def create_dummy_profiles_with_details(db: Session, users: List[models.User]) ->
             "website_url": fake.url() if random.choice([True, False]) else None,
             "orcid_id": fake.bothify(text="????-????-????-????") if user.role == models.UserRole.RESEARCHER else None,
             "about": fake.paragraph(nb_sentences=random.randint(3, 7)),
-            "skills": fake.words(nb=random.randint(3, 7), unique=True),
+            "skills":", ".join(fake.words(nb=random.randint(4, 8), unique=True)),
             "research_interests": fake.words(nb=random.randint(2, 5), unique=True) if user.role != models.UserRole.INSTITUTION else None,
             "is_visible_in_talent_pool": random.choice([True, False])
         }
@@ -138,7 +138,7 @@ def create_dummy_grants(db: Session, proposer_users: List[models.User], count: i
             "end_date_expected": fake.date_object(),
             "eligibility_criteria": fake.text(max_nb_chars=200),
             "website_link": fake.url() if random.choice([True, False]) else None,
-            "talent_requirements": {"roles_needed": fake.words(nb=2), "skills": fake.words(nb=3)}
+            "talent_requirements": {"roles_needed": fake.words(nb=2), "skills": ", ".join(fake.words(nb=random.randint(2, 4), unique=True)),}
         }
         grant = models.Grant(**grant_data)
         db.add(grant)
@@ -165,7 +165,7 @@ def create_dummy_projects(db: Session, creator_users: List[models.User], grants:
             "status": random.choice(list(models.ProjectStatus)),
             "category": random.choice(list(models.ProjectCategory)),
             "expected_duration": f"{random.randint(2,12)} months",
-            "required_skills": fake.words(nb=random.randint(3,6), unique=True),
+            "required_skills": ", ".join(fake.words(nb=random.randint(4, 6), unique=True)),
             "roles_available": {"lead_researcher": fake.name(), "positions": random.randint(1,3)},
             "budget": random.uniform(5000, 100000) if random.choice([True, False]) else None,
             "grant_id": random.choice(grants).id if grants and random.choice([True, False, False]) else None,

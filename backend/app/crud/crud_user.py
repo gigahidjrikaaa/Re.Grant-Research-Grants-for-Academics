@@ -3,9 +3,24 @@ from typing import Optional, List, Union, Dict, Any
 
 from app.models.user import User, UserRole # Ensure UserRole is imported if used directly
 from app.schemas.user import UserCreate, UserUpdate
+from app.crud.base import CRUDBase
 # from app.core.security import get_password_hash # Keep local imports if for circular dependency
 
-class CRUDUser:
+class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+    def __init__(self):
+        """
+        CRUD object with default methods to Create, Read, Update, Delete (CRUD).
+
+        **Parameters**
+
+        * `model`: A SQLAlchemy model class. Defaulting to User model.
+        """
+        super().__init__(model=User)
+
+    """
+    CRUD operations for User model.
+    Inherits from CRUDBase for common operations.
+    """
     def get_user(self, db: Session, user_id: int) -> Optional[User]:
         return db.query(User).filter(User.id == user_id).first()
 
@@ -25,21 +40,19 @@ class CRUDUser:
         if user_in.password: 
             hashed_password = get_password_hash(user_in.password)
         
-        # Ensure user_in.role is of type UserRole enum if your model expects it,
-        # or that SQLAlchemy handles the conversion from string correctly.
-        # If user_in.role is already a UserRole enum member from Pydantic validation, it's fine.
         db_user_data = {
             "wallet_address": user_in.wallet_address,
             "email": user_in.email,
             "full_name": user_in.full_name,
-            "role": user_in.role, # This should be a UserRole enum member or a string value like "student"
+            "role": user_in.role, 
             "is_active": user_in.is_active if user_in.is_active is not None else True,
             "is_superuser": user_in.is_superuser if user_in.is_superuser is not None else False,
         }
         if hashed_password:
             db_user_data["hashed_password"] = hashed_password
             
-        db_user_obj = User(**db_user_data)
+        # Using self.model from CRUDBase, set by __init__
+        db_user_obj = self.model(**db_user_data) 
         
         db.add(db_user_obj)
         db.commit()
@@ -49,23 +62,24 @@ class CRUDUser:
     def update_user(
         self,
         db: Session,
-        db_user: User, # Renamed from db_user_obj for clarity
+        db_user: User, 
         user_in: Union[UserUpdate, Dict[str, Any]]
     ) -> User:
         if isinstance(user_in, dict):
             update_data = user_in
         else:
-            update_data = user_in.model_dump(exclude_unset=True) # Pydantic v2
+            update_data = user_in.model_dump(exclude_unset=True)
 
-        if "password" in update_data and update_data.get("password"): # Check if password is not None or empty
+        if "password" in update_data and update_data.get("password"): 
             from app.core.security import get_password_hash 
             update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
-        elif "password" in update_data: # If password key exists but is empty/None, remove it from update_data
+        elif "password" in update_data: 
              del update_data["password"]
 
 
         if "email" in update_data and update_data.get("email") is not None:
-            existing_user_with_email = db.query(User).filter(User.email == update_data["email"]).first()
+            # Using self.model here for querying
+            existing_user_with_email = db.query(self.model).filter(self.model.email == update_data["email"]).first()
             if existing_user_with_email and existing_user_with_email.id != db_user.id:
                 raise ValueError("Email already registered to another user.")
 
@@ -78,7 +92,10 @@ class CRUDUser:
         return db_user
 
     def delete_user(self, db: Session, user_id: int) -> Optional[User]:
-        db_user_obj = db.query(User).get(user_id) # .get() is simpler for PK lookup
+        # This implementation is fine. Alternatively, if __init__ is set up,
+        # you could use: return super().remove(db, id=user_id)
+        # For clarity and consistency with other method names, keeping this custom one is okay.
+        db_user_obj = db.query(self.model).get(user_id) 
         if db_user_obj:
             db.delete(db_user_obj)
             db.commit()
