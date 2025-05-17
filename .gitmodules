@@ -4,3 +4,6 @@
 [submodule "contracts/re_grant_platform/lib/openzeppelin-contracts"]
 	path = contracts/re_grant_platform/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
