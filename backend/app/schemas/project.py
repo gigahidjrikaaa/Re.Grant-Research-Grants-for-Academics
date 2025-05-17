@@ -31,11 +31,12 @@ class ProjectBase(BaseModel):
     title: str
     description: str
     category: ProjectCategory
-    status: Optional[str] = "Open" # Default status
+    status: Optional[ProjectStatus] = ProjectStatus.OPEN # Use the enum for type safety, FastAPI handles serialization
+    expected_duration: Optional[str] = None # ADDED
     start_date: Optional[datetime.date] = None
     end_date: Optional[datetime.date] = None
     budget: Optional[float] = None
-    required_skills: Optional[str] = None # Comma-separated string, or consider List[str]
+    required_skills: Optional[List[str]] = None # CHANGED from Optional[str]
     # research_goals: Optional[str] = None
 
 class ProjectCreate(ProjectBase):
@@ -43,15 +44,20 @@ class ProjectCreate(ProjectBase):
     pass
 
 class ProjectUpdate(ProjectBase):
-    title: Optional[str] = None # Make all fields optional for update
+    title: Optional[str] = None
     description: Optional[str] = None
     category: Optional[ProjectCategory] = None
-    # ... make other fields optional
+    status: Optional[ProjectStatus] = None # Use enum
+    expected_duration: Optional[str] = None # ADDED
+    start_date: Optional[datetime.date] = None
+    end_date: Optional[datetime.date] = None
+    budget: Optional[float] = None
+    required_skills: Optional[List[str]] = None # CHANGED
 
 
 class ProjectInDBBase(ProjectBase):
     id: int
-    created_by_user_id: int
+    creator_id: int
     created_at: datetime.datetime
     updated_at: Optional[datetime.datetime] = None
 
