@@ -29,6 +29,10 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+    projects_created = relationship("Project", back_populates="creator", foreign_keys="[Project.created_by_user_id]")
+    member_of_projects = relationship("ProjectTeamMember", back_populates="user")
+    project_applications = relationship("ProjectApplication", back_populates="applicant")
+
     # Relationships are defined in other files and will link back here
     # e.g., Profile.user = relationship("User", back_populates="profile")
     # User.profile will be set in profile.py or models/__init__.py

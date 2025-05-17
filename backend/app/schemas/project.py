@@ -1,8 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel
 import datetime
-from app.models.project import ProjectCategory # Assuming enum is in models.project
-from app.models.grant import GrantApplicationStatus # Reusing for project applications
+from app.models.project import ProjectCategory, ProjectStatus, ProjectApplicationStatus # Assuming enum is in models.project
 from .user import User # For creator and team members
 
 # --- Project Team Member Schemas ---
@@ -74,13 +73,13 @@ class ProjectApplicationCreate(ProjectApplicationBase):
 
 class ProjectApplicationUpdate(BaseModel):
     cover_letter: Optional[str] = None
-    status: Optional[GrantApplicationStatus] = None
+    status: Optional[ProjectApplicationStatus] = None
 
 class ProjectApplicationInDBBase(ProjectApplicationBase):
     id: int
     project_id: int
     user_id: int
-    status: GrantApplicationStatus
+    status: ProjectApplicationStatus
     application_date: datetime.date
 
     class Config:
@@ -94,5 +93,5 @@ class ProjectTeamMemberUpdate(BaseModel):
     role_in_project: Optional[str] = None
 
 # To handle forward reference if Project schema includes List[ProjectApplication]
-# Project.model_rebuild() # Pydantic v2
+Project.model_rebuild() # Pydantic v2
 # Project.update_forward_refs() # Pydantic v1

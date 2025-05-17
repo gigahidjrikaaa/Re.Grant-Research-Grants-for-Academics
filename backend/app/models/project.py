@@ -8,20 +8,21 @@ from app.db.base_class import Base
 # from .user import User # Import later
 # from .grant import Grant # Import later
 
-class ApplicationStatus(str, enum.Enum): # This is for Project Applications
-    PENDING = "pending"
-    ACCEPTED = "accepted"
-    REJECTED = "rejected"
-    WITHDRAWN = "withdrawn"
-    IN_PROGRESS = "in_progress" # Review in progress
-    CANCELLED = "cancelled"
-
 class ProjectStatus(str, enum.Enum):
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     ON_HOLD = "on_hold"
     CANCELLED = "cancelled"
+
+class ProjectApplicationStatus(str, enum.Enum):
+    DRAFT = "draft" # Example: if applications can be saved as drafts
+    SUBMITTED = "submitted"
+    IN_REVIEW = "in_review" # Different from grant's "under_review" perhaps
+    INTERVIEW_SCHEDULED = "interview_scheduled" # Example specific status
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    CLOSED = "closed" # Example: if project closes applications
 
 class ProjectCategory(str, enum.Enum): # Added
     TECHNOLOGY = "technology"
@@ -32,17 +33,6 @@ class ProjectCategory(str, enum.Enum): # Added
     EDUCATION = "education"
     ENVIRONMENT = "environment"
     OTHER = "other"
-
-class ProjectApplication(Base):
-    __tablename__ = "project_applications"
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    cover_letter = Column(Text, nullable=True)
-    status = Column(DBEnum(ApplicationStatus), default=ApplicationStatus.PENDING, nullable=False)
-    application_date = Column(Date, default=datetime.date.today, nullable=False)
-    project = relationship("Project", back_populates="project_applications_received") # Renamed back_populates for clarity
-    applicant = relationship("User", back_populates="project_applications_made") # Renamed back_populates for clarity
 
 class Project(Base):
     __tablename__ = "projects"
@@ -68,6 +58,27 @@ class Project(Base):
     def __repr__(self):
         return f"<Project(id={self.id}, title='{self.title}', status='{self.status.value}')>"
 
+class ProjectTeamMember(Base):
+    __tablename__ = "project_team_members"
+    id = Column(Integer, primary_key=True, index=True) # Good to have a PK for association objects
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role_in_project = Column(String, nullable=False, default="Member") # e.g., "Lead", "Developer", "Researcher"
+
+    project = relationship("Project", back_populates="team_members")
+    user = relationship("User", back_populates="member_of_projects") # In User model add: member_of_projects = relationship("ProjectTeamMember", back_populates="user")
+
+class ProjectApplication(Base):
+    __tablename__ = "project_applications"
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    cover_letter = Column(Text, nullable=True)
+    status = Column(DBEnum(ProjectApplicationStatus), default=ProjectApplicationStatus.SUBMITTED, nullable=False) 
+    application_date = Column(Date, default=datetime.date.today, nullable=False)
+    project = relationship("Project", back_populates="project_applications_received") # Renamed back_populates for clarity
+    applicant = relationship("User", back_populates="project_applications_made") # Renamed back_populates for clarity
+
 class ProjectMember(Base):
     __tablename__ = "project_members"
     id = Column(Integer, primary_key=True, index=True)
@@ -80,12 +91,15 @@ class ProjectMember(Base):
     user = relationship("User", back_populates="project_participations")
 
 # Add back-references to User model
-from .user import User
-User.projects_created = relationship("Project", back_populates="creator", foreign_keys=[Project.creator_id])
-User.project_participations = relationship("ProjectMember", back_populates="user", foreign_keys=[ProjectMember.user_id])
-User.project_applications_made = relationship("ProjectApplication", back_populates="applicant", foreign_keys=[ProjectApplication.user_id])
+from .user import User # This late import is okay.
+if not hasattr(User, 'projects_created'): # Check to avoid redefinition if already done in User or another model file
+    User.projects_created = relationship("Project", back_populates="creator", foreign_keys=[Project.created_by_user_id])
+if not hasattr(User, 'member_of_projects'):
+    User.member_of_projects = relationship("ProjectTeamMember", back_populates="user", foreign_keys=[ProjectTeamMember.user_id])
+if not hasattr(User, 'project_applications'):
+    User.project_applications = relationship("ProjectApplication", back_populates="applicant", foreign_keys=[ProjectApplication.user_id])
 
-
-# Add back-reference to Grant model
+# Add back-references to Grant model
 from .grant import Grant
-Grant.projects = relationship("Project", back_populates="grant")
+if not hasattr(Grant, 'projects'):
+    Grant.projects = relationship("Project", back_populates="grant", foreign_keys=[Project.grant_id])
