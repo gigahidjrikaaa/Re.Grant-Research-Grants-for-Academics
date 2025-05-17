@@ -447,8 +447,11 @@ def seed_dummy_grants_endpoint(
     request_body: SeedGrantsRequest
 ):
     funder_users = db.query(models.User).filter(
-        models.User.role.in_([models.UserRole.ADMIN, models.UserRole.INSTITUTION])
-    ).limit(10).all() # Get some potential funders
+        models.User.role.in_([
+            models.UserRole.ADMIN.value, 
+            models.UserRole.INSTITUTION.value
+        ])
+    ).order_by(func.random()).limit(10).all() # Added order_by random for variety
     if not funder_users: # If no admin/institution, use any user (less ideal)
         funder_users = db.query(models.User).order_by(func.random()).limit(5).all()
     if not funder_users: # If still no users at all
