@@ -137,7 +137,11 @@ export default function ApplyGrantPage() {
 
   // --- Form Submission ---
   const onSubmit = async (data: GrantFormData) => {
-    if (currentStep !== totalSteps) return;
+    if (currentStep !== totalSteps - 1) {
+      console.warn("onSubmit called on incorrect step:", currentStep);
+      return;
+    }
+    
     if (!file) {
         toast.error("Missing Document", { description: "Please upload the supporting document." });
         return;
