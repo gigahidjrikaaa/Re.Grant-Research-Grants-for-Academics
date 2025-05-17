@@ -52,8 +52,8 @@ class Project(Base):
 
     creator = relationship("User", back_populates="projects_created")
     grant = relationship("Grant", back_populates="projects")
-    project_members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
-    project_applications_received = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan") # Renamed
+    team_members = relationship("ProjectTeamMember", back_populates="project", cascade="all, delete-orphan")
+    project_applications_received = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Project(id={self.id}, title='{self.title}', status='{self.status.value}')>"
@@ -79,21 +79,10 @@ class ProjectApplication(Base):
     project = relationship("Project", back_populates="project_applications_received") # Renamed back_populates for clarity
     applicant = relationship("User", back_populates="project_applications_made") # Renamed back_populates for clarity
 
-class ProjectMember(Base):
-    __tablename__ = "project_members"
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    role_in_project = Column(String, nullable=True)
-    # is_applicant and application_status are removed, use ProjectApplication for applications
-    joined_at = Column(DateTime(timezone=True), server_default=func.now())
-    project = relationship("Project", back_populates="project_members")
-    user = relationship("User", back_populates="project_participations")
-
 # Add back-references to User model
 from .user import User # This late import is okay.
 if not hasattr(User, 'projects_created'): # Check to avoid redefinition if already done in User or another model file
-    User.projects_created = relationship("Project", back_populates="creator", foreign_keys=[Project.created_by_user_id])
+    User.projects_created = relationship("Project", back_populates="creator", foreign_keys=[Project.creator_id])
 if not hasattr(User, 'member_of_projects'):
     User.member_of_projects = relationship("ProjectTeamMember", back_populates="user", foreign_keys=[ProjectTeamMember.user_id])
 if not hasattr(User, 'project_applications'):

@@ -8,7 +8,7 @@ from .user import ( # Adjust based on the final names in your user.py
     UserList,
     UserInDB # if you need to export the DB representation schema
 )
-from .token import Token, TokenPayload # Keep existing
+from .token import Token, TokenPayload, NonceResponse, SIWELoginData # Keep existing
 from .profile import (
     ProfileSchema, ProfileCreate, ProfileUpdate,
     Experience, ExperienceCreate, ExperienceUpdate,
@@ -45,4 +45,6 @@ __all__ = [
     "Project", "ProjectCreate", "ProjectUpdate",
     "ProjectTeamMember", "ProjectTeamMemberCreate", "ProjectTeamMemberUpdate",
     "ProjectApplication", "ProjectApplicationCreate", "ProjectApplicationUpdate",
+
+    "Token", "TokenPayload", "NonceResponse", "SIWELoginData"
 ]

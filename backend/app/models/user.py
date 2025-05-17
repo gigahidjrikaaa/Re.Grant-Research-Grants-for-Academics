@@ -29,7 +29,16 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    projects_created = relationship("Project", back_populates="creator", foreign_keys="[Project.created_by_user_id]")
+    profile = relationship("Profile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+
+    grants_proposed = relationship("Grant", back_populates="proposer", foreign_keys="app.models.grant.Grant.proposer_id") # String FK
+    grant_applications = relationship("GrantApplication", back_populates="applicant", foreign_keys="app.models.grant.GrantApplication.applicant_id") # String FK
+
+    projects_created = relationship(
+        "Project", # String reference to model name
+        back_populates="creator", 
+        foreign_keys="app.models.project.Project.creator_id" # String reference to Column
+    )
     member_of_projects = relationship("ProjectTeamMember", back_populates="user")
     project_applications = relationship("ProjectApplication", back_populates="applicant")
 
