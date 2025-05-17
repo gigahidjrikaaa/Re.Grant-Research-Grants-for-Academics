@@ -93,7 +93,6 @@ class CRUDProjectApplication(CRUDBase[ProjectApplication, ProjectApplicationCrea
             .all()
         )
 
-
 project = CRUDProject(Project)
 project_team_member = CRUDProjectTeamMember(ProjectTeamMember)
 project_application = CRUDProjectApplication(ProjectApplication)

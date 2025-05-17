@@ -21,16 +21,14 @@ def read_projects(
     return projects
 
 @router.get("/{project_id}", response_model=schemas.Project)
-def read_project(
-    *,
-    db: Session = Depends(deps.get_db),
+def read_project_by_id(
     project_id: int,
-    # current_user: models.User = Depends(deps.get_current_active_user), # Optional
+    db: Session = Depends(deps.get_db),
 ) -> Any:
     """
-    Get a specific project by ID with detailed information.
+    Get a specific project by its ID.
     """
-    project = crud.project.get_detailed(db, id=project_id)
+    project = crud.project.get_detailed(db, id=project_id) # Uses the get_detailed method
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project

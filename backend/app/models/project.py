@@ -36,6 +36,7 @@ class ProjectCategory(str, enum.Enum): # Added
 
 class Project(Base):
     __tablename__ = "projects"
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=False)
@@ -54,6 +55,7 @@ class Project(Base):
     grant = relationship("Grant", back_populates="projects")
     team_members = relationship("ProjectTeamMember", back_populates="project", cascade="all, delete-orphan")
     project_applications_received = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
+    applications = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Project(id={self.id}, title='{self.title}', status='{self.status.value}')>"
@@ -77,7 +79,7 @@ class ProjectApplication(Base):
     status = Column(DBEnum(ProjectApplicationStatus), default=ProjectApplicationStatus.SUBMITTED, nullable=False) 
     application_date = Column(Date, default=datetime.date.today, nullable=False)
     project = relationship("Project", back_populates="project_applications_received") # Renamed back_populates for clarity
-    applicant = relationship("User", back_populates="project_applications_made") # Renamed back_populates for clarity
+    applicant = relationship("User", back_populates="project_applications") # Renamed back_populates for clarity
 
 # Add back-references to User model
 from .user import User # This late import is okay.
