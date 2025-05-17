@@ -1,8 +1,8 @@
 from typing import Optional, List
 from pydantic import BaseModel
 import datetime
-from app.models.grant import GrantType, ApplicationStatus # Assuming these enums are in models.grant
-from .user import UserSchema # To show funder details
+from app.models.grant import GrantType, GrantApplicationStatus # Assuming these enums are in models.grant
+from .user import User # To show funder details
 
 # Properties to receive on item creation
 class GrantCreate(BaseModel):
@@ -50,7 +50,7 @@ class GrantInDBBase(BaseModel):
 
 # Properties to return to client (includes relational data)
 class Grant(GrantInDBBase):
-    funder: Optional[UserSchema] = None # Eager load this
+    funder: Optional[User] = None # Eager load this
 
 # --- Grant Application Schemas ---
 class GrantApplicationBase(BaseModel):
@@ -62,18 +62,18 @@ class GrantApplicationCreate(GrantApplicationBase):
 
 class GrantApplicationUpdate(BaseModel):
     proposal: Optional[str] = None
-    status: Optional[ApplicationStatus] = None
+    status: Optional[GrantApplicationStatus] = None
 
 class GrantApplicationInDBBase(GrantApplicationBase):
     id: int
     grant_id: int
     user_id: int
-    status: ApplicationStatus
+    status: GrantApplicationStatus
     application_date: datetime.date # Model uses Date
 
     class Config:
         from_attributes = True
 
 class GrantApplication(GrantApplicationInDBBase):
-    applicant: Optional[UserSchema] = None
+    applicant: Optional[User] = None
     grant: Optional[Grant] = None # Could be simplified to GrantInDBBase if recursive depth is an issue

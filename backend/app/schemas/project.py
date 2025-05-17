@@ -2,8 +2,8 @@ from typing import Optional, List
 from pydantic import BaseModel
 import datetime
 from app.models.project import ProjectCategory # Assuming enum is in models.project
-from app.models.grant import ApplicationStatus # Reusing for project applications
-from .user import UserSchema # For creator and team members
+from app.models.grant import GrantApplicationStatus # Reusing for project applications
+from .user import User # For creator and team members
 
 # --- Project Team Member Schemas ---
 class ProjectTeamMemberBase(BaseModel):
@@ -24,7 +24,7 @@ class ProjectTeamMemberInDBBase(ProjectTeamMemberBase):
         from_attributes = True
 
 class ProjectTeamMember(ProjectTeamMemberInDBBase):
-    user: Optional[UserSchema] = None # Eager load this
+    user: Optional[User] = None # Eager load this
 
 
 # --- Project Schemas ---
@@ -60,7 +60,7 @@ class ProjectInDBBase(ProjectBase):
         from_attributes = True
 
 class Project(ProjectInDBBase):
-    creator: Optional[UserSchema] = None
+    creator: Optional[User] = None
     team_members: List[ProjectTeamMember] = [] # List of team members
     # applications: List['ProjectApplication'] # Forward reference if needed for applications list
 
@@ -74,20 +74,20 @@ class ProjectApplicationCreate(ProjectApplicationBase):
 
 class ProjectApplicationUpdate(BaseModel):
     cover_letter: Optional[str] = None
-    status: Optional[ApplicationStatus] = None
+    status: Optional[GrantApplicationStatus] = None
 
 class ProjectApplicationInDBBase(ProjectApplicationBase):
     id: int
     project_id: int
     user_id: int
-    status: ApplicationStatus
+    status: GrantApplicationStatus
     application_date: datetime.date
 
     class Config:
         from_attributes = True
 
 class ProjectApplication(ProjectApplicationInDBBase):
-    applicant: Optional[UserSchema] = None
+    applicant: Optional[User] = None
     project: Optional[ProjectInDBBase] = None # Simplified to avoid deep recursion
 
 class ProjectTeamMemberUpdate(BaseModel):
