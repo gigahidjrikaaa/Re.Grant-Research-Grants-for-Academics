@@ -8,6 +8,13 @@ optimizer = true
 optimizer_runs = 200
 via_ir = true
 
+# Remappings for easier imports (optional but good practice)
+remappings = [
+    "ds-test/=lib/forge-std/lib/ds-test/src/", # Standard forge-std remapping
+    "forge-std/=lib/forge-std/src/",           # Standard forge-std remapping
+    '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
+]
+
 # RPC endpoint for Lisk Sepolia Testnet
 # This can be used by `forge script` and `cast` commands.
 # The official public RPC is: https://rpc.sepolia-api.lisk.com
@@ -24,10 +31,5 @@ lisk_sepolia = "https://rpc.sepolia-api.lisk.com"
 #   lisk_sepolia = { key = "${LISKSCAN_API_KEY_PLACEHOLDER}", url = "https://sepolia-blockscout.lisk.com/api" }
 # You would then add LISKSCAN_API_KEY_PLACEHOLDER to your .env file.
 # For now, we'll assume manual verification or investigate Blockscout API compatibility later.
-
-# Remappings for easier imports (optional but good practice)
-# remappings = [
-#     '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
-# ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
