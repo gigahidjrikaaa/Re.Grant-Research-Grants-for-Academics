@@ -6,6 +6,8 @@ import {Grant} from "../src/Grant.sol";
 import {MockIDRX} from "../src/mocks/MockIDRX.sol";
 import {ReGrantStructs} from "../src/lib/ReGrantStructs.sol";
 import {IGrant} from "../src/interfaces/IGrant.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 // ReGrantAddresses isn't strictly needed here if we pass the mock token address directly,
 // but good to keep in mind for tests that might fork Lisk Sepolia.
 // import {ReGrantAddresses} from "../src/lib/ReGrantAddresses.sol";
@@ -138,7 +140,7 @@ contract GrantTest is Test {
         idrxToken.approve(address(grantContract), 100 ether); // Beneficiary needs tokens for this test
          vm.expectRevert(
             abi.encodeWithSelector(
-                AccessControlEnumerable.AccessControlUnauthorizedAccount.selector,
+                bytes4(keccak256("AccessControlUnauthorizedAccount(address,bytes32)")),
                 beneficiary, // account
                 grantContract.GRANTOR_ROLE() // role
             )
@@ -301,13 +303,7 @@ contract GrantTest is Test {
         vm.stopPrank();
 
         vm.startPrank(beneficiary);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AccessControlEnumerable.AccessControlUnauthorizedAccount.selector,
-                beneficiary,
-                grantContract.GRANTOR_ROLE() // Actually checks for GRANTOR_ROLE or PLATFORM_ADMIN_ROLE
-            )
-        );
+        vm.expectRevert(bytes("Grant: Caller is not grantor or platform admin"));
         grantContract.addMilestone(MILESTONE1_DESC_IPFS, MILESTONE1_AMOUNT, verifier1);
         vm.stopPrank();
     }
@@ -320,7 +316,7 @@ contract GrantTest is Test {
         idrxToken.approve(address(grantContract), TOTAL_FUNDING_REQUESTED);
         grantContract.fundGrant(TOTAL_FUNDING_REQUESTED);
         vm.stopPrank(); //grantor
-        vm.prank(beneficiary); grantContract.submitMilestoneProof(0, PROOF1_IPFS); vm.stopPrank();
+        vm.prank(beneficiary); grantContract.submitMilestoneProof(0, MILESTONE1_PROOF_IPFS ); vm.stopPrank();
 
 
         vm.startPrank(otherUser); // Not verifier1
@@ -340,7 +336,7 @@ contract GrantTest is Test {
         grantContract.grantRole(grantContract.VERIFIER_ROLE(), grantor); 
         vm.stopPrank(); //grantor
 
-        vm.prank(beneficiary); grantContract.submitMilestoneProof(0, PROOF1_IPFS); vm.stopPrank();
+        vm.prank(beneficiary); grantContract.submitMilestoneProof(0, MILESTONE1_PROOF_IPFS ); vm.stopPrank();
 
         // Grantor (who is also the verifier) approves
         vm.prank(grantor);

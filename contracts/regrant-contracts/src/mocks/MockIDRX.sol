@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24; // Match your foundry.toml solc_version
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol"; // Using OpenZeppelin's Ownable (initialOwner pattern)
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title MockIDRX

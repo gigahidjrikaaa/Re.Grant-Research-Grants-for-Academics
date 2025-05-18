@@ -8,6 +8,7 @@ import {IGrant} from "../src/interfaces/IGrant.sol";
 import {Grant} from "../src/Grant.sol"; // To cast the deployed grant address
 import {ReGrantAddresses} from "../src/lib/ReGrantAddresses.sol";
 import {MockIDRX} from "../src/mocks/MockIDRX.sol"; // For testing IDRX interactions if needed locally
+import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 
 contract GrantFactoryTest is Test {
     GrantFactory public factory;
