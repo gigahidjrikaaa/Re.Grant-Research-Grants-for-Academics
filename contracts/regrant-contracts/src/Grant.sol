@@ -47,10 +47,10 @@ contract Grant is IGrant, AccessControlEnumerable, ReentrancyGuard {
      * @dev Throws if called by any account other than an account with the given role.
      * Overridden from AccessControl to use _msgSender() for broader compatibility (e.g. meta-transactions).
      */
-    modifier onlyRole(bytes32 role) override {
-        _checkRole(role, _msgSender());
-        _;
-    }
+    // modifier onlyRole(bytes32 role) override {
+    //     _checkRole(role, _msgSender());
+    //     _;
+    // }
 
     modifier onlyBeneficiary() {
         _checkRole(BENEFICIARY_ROLE, _msgSender());

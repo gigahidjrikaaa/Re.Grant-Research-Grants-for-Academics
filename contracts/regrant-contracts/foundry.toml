@@ -13,6 +13,7 @@ remappings = [
     "ds-test/=lib/forge-std/lib/ds-test/src/", # Standard forge-std remapping
     "forge-std/=lib/forge-std/src/",           # Standard forge-std remapping
     '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
+    '@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/',
 ]
 
 # RPC endpoint for Lisk Sepolia Testnet
